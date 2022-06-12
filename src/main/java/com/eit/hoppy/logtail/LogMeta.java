@@ -1,7 +1,6 @@
 package com.eit.hoppy.logtail;
 
-import com.eit.hoppy.core.FileHelper;
-import com.eit.hoppy.core.UdpReceive;
+import com.eit.hoppy.util.FileHelper;
 
 import java.io.File;
 import java.util.StringJoiner;
@@ -20,7 +19,7 @@ public class LogMeta {
     /**
      * 文件的签名,使用日志文件的前1024字节的hash
      */
-    private String signature;
+    private int signature;
     /**
      * 文件的dev + Inode组合,在windows系统中取不到值
      */
@@ -38,15 +37,19 @@ public class LogMeta {
      */
     private FileEventEnum eventEnum;
 
-    public LogMeta() {
-
-    }
-
+    /**
+     * description: 默认是CREATE事件，lastUpdateTime = 0L
+     *
+     * @param file
+     * @author Hlingoes 2022/6/12
+     */
     public LogMeta(File file) {
         this.file = file;
         devInode = FileHelper.getFileInode(file.getAbsolutePath());
-        lastUpdateTime = file.lastModified();
+        lastUpdateTime = 0L;
         sourcePath = file.getAbsolutePath();
+        signature = FileHelper.calFileSignature(sourcePath);
+        eventEnum = FileEventEnum.CREATE;
     }
 
     public String getSourcePath() {
@@ -57,11 +60,11 @@ public class LogMeta {
         this.sourcePath = sourcePath;
     }
 
-    public String getSignature() {
+    public int getSignature() {
         return signature;
     }
 
-    public void setSignature(String signature) {
+    public void setSignature(int signature) {
         this.signature = signature;
     }
 
@@ -101,7 +104,7 @@ public class LogMeta {
     public String toString() {
         return new StringJoiner(", ", LogMeta.class.getSimpleName() + "[", "]")
                 .add("sourcePath='" + sourcePath + "'")
-                .add("signature='" + signature + "'")
+                .add("signature=" + signature)
                 .add("devInode='" + devInode + "'")
                 .add("lastUpdateTime=" + lastUpdateTime)
                 .add("file=" + file)

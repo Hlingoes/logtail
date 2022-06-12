@@ -1,5 +1,6 @@
 package com.eit.hoppy.core;
 
+import com.eit.hoppy.util.FileHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,4 +1,4 @@
-import com.eit.hoppy.core.FileHelper;
+import com.eit.hoppy.util.FileHelper;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

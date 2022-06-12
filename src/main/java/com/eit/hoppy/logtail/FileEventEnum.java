@@ -19,8 +19,4 @@ public enum FileEventEnum {
      * 文件删除
      */
     DELETE,
-    /**
-     * 没有任何变化
-     */
-    NULL,
 }

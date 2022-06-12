@@ -1,6 +1,5 @@
 package com.eit.hoppy.logtail.polling;
 
-import com.eit.hoppy.core.FileHelper;
 import com.eit.hoppy.logtail.CacheManager;
 import com.eit.hoppy.logtail.LogMeta;
 import org.slf4j.Logger;
@@ -54,12 +53,7 @@ public class DirFilePollingThread extends AbstractPollingThread {
             for (Path path : stream) {
                 File file = path.toFile();
                 if (!CacheManager.getFileCacheMap().containsKey(file.getAbsolutePath())) {
-                    LogMeta logMeta = new LogMeta();
-                    logMeta.setFile(file);
-                    logMeta.setSourcePath(file.getAbsolutePath());
-                    logMeta.setLastUpdateTime(file.lastModified());
-                    logMeta.setDevInode(FileHelper.getFileInode(file.getAbsolutePath()));
-                    CacheManager.getFileCacheMap().put(file.getAbsolutePath(), logMeta);
+                    CacheManager.addFileCache(new LogMeta(file));
                 }
             }
         } catch (IOException | DirectoryIteratorException ex) {
