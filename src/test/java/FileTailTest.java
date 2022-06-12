@@ -18,7 +18,7 @@ import java.util.List;
  * Created by jaren.han on 2020-01-08.
  */
 public class FileTailTest {
-    Logger logger = LoggerFactory.getLogger(FileTailTest.class);
+    private static final Logger logger = LoggerFactory.getLogger(FileTailTest.class);
 
     @Test
     public void getCurrentLogTest() {
@@ -29,17 +29,16 @@ public class FileTailTest {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        System.out.println("Creation Time      : " + bfa.creationTime());
-        System.out.println("Last Access Time   : " + bfa.lastAccessTime());
-        System.out.println("Last Modified Time : " + bfa.lastModifiedTime());
-        System.out.println("Is Directory       : " + bfa.isDirectory());
-        System.out.println("Is Other           : " + bfa.isOther());
-        System.out.println("Is Regular File    : " + bfa.isRegularFile());
-        System.out.println("Is Symbolic Link   : " + bfa.isSymbolicLink());
-        System.out.println("Size               : " + bfa.size());
+        logger.info("Creation Time      : " + bfa.creationTime());
+        logger.info("Last Access Time   : " + bfa.lastAccessTime());
+        logger.info("Last Modified Time : " + bfa.lastModifiedTime());
+        logger.info("Is Directory       : " + bfa.isDirectory());
+        logger.info("Is Other           : " + bfa.isOther());
+        logger.info("Is Regular File    : " + bfa.isRegularFile());
+        logger.info("Is Symbolic Link   : " + bfa.isSymbolicLink());
+        logger.info("Size               : " + bfa.size());
         Object objectKey = bfa.fileKey();
-        System.out.println("Object Key               : " + bfa.fileKey());
+        logger.info("Object Key               : " + bfa.fileKey());
     }
 
     @Test
@@ -96,7 +95,7 @@ public class FileTailTest {
     public void getFile() {
         List<File> files = FileHelper.getFileSort("D:\\opt\\logs");
         for (File file : files) {
-            System.out.println(file.getAbsolutePath());
+            logger.info(file.getAbsolutePath());
         }
     }
 
@@ -107,7 +106,7 @@ public class FileTailTest {
         list.add("bb");
         list.add("cc");
         for (String value : list) {
-            System.out.println(value);
+            logger.info(value);
         }
 
         LinkedList<String> linkedList = new LinkedList<>();
@@ -117,7 +116,7 @@ public class FileTailTest {
         Iterator<String> iterator = linkedList.listIterator();
         String value;
         while ((value = iterator.next()) != null) {
-            System.out.println(value);
+            logger.info(value);
         }
     }
 }

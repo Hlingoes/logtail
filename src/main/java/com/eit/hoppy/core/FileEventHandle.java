@@ -14,7 +14,7 @@ import java.util.Map;
  * @author Hlingoes 2022/6/5
  * @citation Created by jaren.han on 2020-01-13.
  */
-public class FileEventHandle {
+public class FileEventHandle implements EventHandle {
 
     static Logger logger = LoggerFactory.getLogger(FileEventHandle.class);
 
@@ -41,7 +41,7 @@ public class FileEventHandle {
      */
     private LinkedList<FileMeta> notifyList = new LinkedList<FileMeta>();
 
-
+    @Override
     public void handleFile(FileMeta fileMeta) {
         //let reader read log
         if (fileMeta.getFileState() == FileState.MODIFY) {

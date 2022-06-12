@@ -81,6 +81,7 @@ public class FileWatch {
             super(name);
         }
 
+        @Override
         void work() {
             try {
                 FileMeta fileMeta = fileMetas.take();
@@ -102,6 +103,7 @@ public class FileWatch {
             super(name);
         }
 
+        @Override
         void work() {
             try {
                 getFiles(dirPath);
@@ -136,6 +138,7 @@ public class FileWatch {
             super(name);
         }
 
+        @Override
         void work() {
             try {
                 if (fileMap.size() > 0) {
@@ -174,6 +177,7 @@ public class FileWatch {
             setDaemon(true);
         }
 
+        @Override
         public void run() {
             while (true) {
                 try {

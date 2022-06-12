@@ -12,9 +12,9 @@ import java.io.RandomAccessFile;
  * @author Hlingoes 2022/6/5
  * @citation Created by jaren.han on 2020-01-10.
  */
-public class LogFileReader  {
+public class LogFileReader {
 
-    static Logger logger = LoggerFactory.getLogger("receiveLog");
+    public static final Logger logger = LoggerFactory.getLogger(LogFileReader.class);
 
     private long readOffset = 0L;
     private File file;
