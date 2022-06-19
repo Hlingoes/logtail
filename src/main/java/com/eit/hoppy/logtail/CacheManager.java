@@ -3,10 +3,13 @@ package com.eit.hoppy.logtail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * description: 日志控制器，缓存文件和reader状态
@@ -29,20 +32,34 @@ public class CacheManager {
      */
     private static final BlockingQueue<LogMeta> POLLING_EVENT_QUEUE = new ArrayBlockingQueue<>(10000);
 
-    public static Map<String, LogMeta> getFileCacheMap() {
-        return FILE_CACHE_MAP;
+    public static boolean isFileCached(String filePath) {
+        synchronized (FILE_CACHE_MAP) {
+            return FILE_CACHE_MAP.containsKey(filePath);
+        }
+    }
+
+    public static boolean isFileCacheEmpty() {
+        synchronized (FILE_CACHE_MAP) {
+            return FILE_CACHE_MAP.isEmpty();
+        }
     }
 
     public static void addFileCache(LogMeta logMeta) {
-        FILE_CACHE_MAP.put(logMeta.getSourcePath(), logMeta);
+        synchronized (FILE_CACHE_MAP) {
+            FILE_CACHE_MAP.put(logMeta.getSourcePath(), logMeta);
+        }
     }
 
     public static void removeFileCache(String filePath) {
-        FILE_CACHE_MAP.remove(filePath);
+        synchronized (FILE_CACHE_MAP) {
+            FILE_CACHE_MAP.remove(filePath);
+        }
     }
 
-    public static BlockingQueue<LogMeta> getPollingEventQueue() {
-        return POLLING_EVENT_QUEUE;
+    public static List<LogMeta> getSortedCacheLogMeta() {
+        synchronized (FILE_CACHE_MAP) {
+            return FILE_CACHE_MAP.values().stream().sorted(Comparator.comparing(LogMeta::getLastUpdateTime)).collect(Collectors.toList());
+        }
     }
 
     public static void addEventQueue(LogMeta logMeta) {

@@ -117,16 +117,4 @@ public class FileHelper {
         return "";
     }
 
-    /**
-     * description: 文件的签名,使用日志文件的前1024字节的hash
-     *
-     * @param filePath
-     * @return int
-     * @author Hlingoes 2022/6/12
-     */
-    public static int calFileSignature(String filePath) {
-        String firstBytes = readFirstBytes(filePath, 1024);
-        return firstBytes.hashCode();
-    }
-
 }

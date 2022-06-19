@@ -17,6 +17,10 @@ public class LogMeta {
      */
     private String sourcePath;
     /**
+     * 用作文件签名的字节数，默认为1024
+     */
+    private int signBytes = 1024;
+    /**
      * 文件的签名,使用日志文件的前1024字节的hash
      */
     private int signature;
@@ -48,8 +52,20 @@ public class LogMeta {
         devInode = FileHelper.getFileInode(file.getAbsolutePath());
         lastUpdateTime = 0L;
         sourcePath = file.getAbsolutePath();
-        signature = FileHelper.calFileSignature(sourcePath);
+        signBytes = file.length() > 1024 ? 1024 : (int) file.length();
+        signature = calSignature();
         eventEnum = FileEventEnum.CREATE;
+    }
+
+    /**
+     * description: 文件的签名,使用日志文件的前bytes字节的hash
+     *
+     * @return int
+     * @author Hlingoes 2022/6/19
+     */
+    public int calSignature() {
+        String firstBytes = FileHelper.readFirstBytes(sourcePath, signBytes);
+        return firstBytes.hashCode();
     }
 
     public String getSourcePath() {
@@ -58,6 +74,14 @@ public class LogMeta {
 
     public void setSourcePath(String sourcePath) {
         this.sourcePath = sourcePath;
+    }
+
+    public int getSignBytes() {
+        return signBytes;
+    }
+
+    public void setSignBytes(int signBytes) {
+        this.signBytes = signBytes;
     }
 
     public int getSignature() {
@@ -104,6 +128,7 @@ public class LogMeta {
     public String toString() {
         return new StringJoiner(", ", LogMeta.class.getSimpleName() + "[", "]")
                 .add("sourcePath='" + sourcePath + "'")
+                .add("signBytes=" + signBytes)
                 .add("signature=" + signature)
                 .add("devInode='" + devInode + "'")
                 .add("lastUpdateTime=" + lastUpdateTime)

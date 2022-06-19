@@ -52,7 +52,7 @@ public class DirFilePollingThread extends AbstractPollingThread {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(dirPath))) {
             for (Path path : stream) {
                 File file = path.toFile();
-                if (!CacheManager.getFileCacheMap().containsKey(file.getAbsolutePath())) {
+                if (!CacheManager.isFileCached(file.getAbsolutePath())) {
                     CacheManager.addFileCache(new LogMeta(file));
                 }
             }
