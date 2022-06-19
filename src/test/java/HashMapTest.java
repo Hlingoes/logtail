@@ -24,7 +24,7 @@ public class HashMapTest {
      * 结果说明：这个操作是线程不安全的
      */
     @Test
-    public void TestConcurrentHashMap() {
+    public void TestConcurrentHashMap() throws InterruptedException {
         ConcurrentHashMap<String, Integer> map = new ConcurrentHashMap<>();
         map.put("key", 1);
         for (int i = 0; i < 10000; i++) {
@@ -40,6 +40,7 @@ public class HashMapTest {
                 logger.info("val: {}", map.get("key"));
                 break;
             }
+            Thread.sleep(500);
         }
     }
 
@@ -48,7 +49,7 @@ public class HashMapTest {
      * 结果说明：对比用例，肯定是线程不安全的
      */
     @Test
-    public void TestHashMap() {
+    public void TestHashMap() throws InterruptedException {
         HashMap<String, Integer> map = new HashMap<>();
         map.put("key", 1);
         for (int i = 0; i < 10000; i++) {
@@ -64,6 +65,7 @@ public class HashMapTest {
                 logger.info("val: {}", map.get("key"));
                 break;
             }
+            Thread.sleep(500);
         }
     }
 
@@ -76,7 +78,7 @@ public class HashMapTest {
      * @author Hlingoes 2022/6/19
      */
     @Test
-    public void TestConcurrentHashMapPut() {
+    public void TestConcurrentHashMapPut() throws InterruptedException {
         ConcurrentHashMap<String, Integer> map = new ConcurrentHashMap<>();
         for (int i = 0; i < 100000; i++) {
             String key = String.valueOf(i);
@@ -92,6 +94,7 @@ public class HashMapTest {
                 logger.info("size: {}", map.size());
                 break;
             }
+            Thread.sleep(500);
         }
     }
 
@@ -104,7 +107,7 @@ public class HashMapTest {
      * @author Hlingoes 2022/6/19
      */
     @Test
-    public void TestHashMapPut() {
+    public void TestHashMapPut() throws InterruptedException {
         HashMap<String, Integer> map = new HashMap<>();
         for (int i = 0; i < 100000; i++) {
             String key = String.valueOf(i);
@@ -120,11 +123,7 @@ public class HashMapTest {
                 logger.info("size: {}", map.size());
                 break;
             }
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            Thread.sleep(500);
         }
     }
 

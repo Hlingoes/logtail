@@ -14,11 +14,16 @@ public abstract class AbstractPollingThread extends Thread {
 
     private static final ThreadGroup POLLING_THREAD_GROUP = new ThreadGroup("PollingThread");
 
-    private boolean interrupt;
+    private boolean stopped;
+    /**
+     * 轮询间隔，默认是5000毫秒
+     */
+    private long period = 5000L;
 
-    public AbstractPollingThread(String name) {
+    public AbstractPollingThread(String name, long period) {
         super(POLLING_THREAD_GROUP, name);
-        setDaemon(true);
+        this.period = period;
+//        setDaemon(true);
     }
 
     @Override
@@ -26,10 +31,11 @@ public abstract class AbstractPollingThread extends Thread {
         while (true) {
             try {
                 polling();
-                if (!interrupt) {
-                    logger.warn("the application is stop");
+                if (stopped) {
+                    logger.warn("the application is stopped");
                     break;
                 }
+                Thread.sleep(period);
             } catch (Exception ex) {
                 logger.error("polling error", ex);
             }
@@ -41,12 +47,19 @@ public abstract class AbstractPollingThread extends Thread {
      */
     abstract void polling();
 
-    public boolean getInterrupt() {
-        return interrupt;
+    public boolean isStopped() {
+        return stopped;
     }
 
-    public void setInterrupt(boolean interrupt) {
-        this.interrupt = interrupt;
+    public void setStopped(boolean stopped) {
+        this.stopped = stopped;
     }
 
+    public long getPeriod() {
+        return period;
+    }
+
+    public void setPeriod(long period) {
+        this.period = period;
+    }
 }

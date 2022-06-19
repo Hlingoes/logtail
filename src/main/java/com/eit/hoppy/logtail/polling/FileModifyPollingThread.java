@@ -19,18 +19,12 @@ import java.util.List;
 public class FileModifyPollingThread extends AbstractPollingThread {
     private static Logger logger = LoggerFactory.getLogger(FileModifyPollingThread.class);
 
-    /**
-     * 轮询间隔，默认是3000毫秒
-     */
-    private long period = 3000L;
-
     public FileModifyPollingThread() {
-        super(FileModifyPollingThread.class.getSimpleName());
+        super(FileModifyPollingThread.class.getSimpleName(), 500L);
     }
 
     public FileModifyPollingThread(long period) {
-        super(FileModifyPollingThread.class.getSimpleName());
-        this.period = period;
+        super(FileModifyPollingThread.class.getSimpleName(), period);
     }
 
     @Override
@@ -39,7 +33,6 @@ public class FileModifyPollingThread extends AbstractPollingThread {
             if (!CacheManager.isFileCacheEmpty()) {
                 pollingEvent();
             }
-            Thread.sleep(period);
         } catch (Exception ex) {
             logger.error("polling error", ex);
         }
@@ -57,7 +50,7 @@ public class FileModifyPollingThread extends AbstractPollingThread {
             } else {
                 File reGetFile = new File(logMeta.getSourcePath());
                 String devInode = FileHelper.getFileInode(logMeta.getSourcePath());
-                // 一般场景inode可认为是识别该文件的唯一标识
+                // 一般场景devInode可认为是识别该文件的唯一标识，若变化，说明是新增
                 if (!logMeta.getDevInode().equals(devInode)) {
                     logMeta.setDevInode(devInode);
                     logMeta.setEventEnum(FileEventEnum.CREATE);

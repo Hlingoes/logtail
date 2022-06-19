@@ -1,6 +1,6 @@
 package com.eit.hoppy;
 
-import com.eit.hoppy.core.FileWatch;
+import com.eit.hoppy.client.RegisterLogTail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,17 +15,10 @@ public class LogtailApplication {
     static Logger logger = LoggerFactory.getLogger(LogtailApplication.class);
 
     public static void main(String[] args) {
-        final FileWatch fileWatch = new FileWatch("/opt/logs/logtail/");
-        // final FileWatch fileWatch = new FileWatch("D:\\opt\\logs\\quechub-lwm2m");
-        try {
-            fileWatch.start();
-            logger.info("start");
-        } catch (Exception ex) {
-            logger.error("start error", ex);
-        }
+        RegisterLogTail.startTask();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             // send de-registration request before destroy
-            fileWatch.stop();
+            RegisterLogTail.stopTask();
         }));
     }
 }

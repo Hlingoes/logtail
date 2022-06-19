@@ -2,12 +2,12 @@ package com.eit.hoppy.logtail.polling;
 
 import com.eit.hoppy.logtail.CacheManager;
 import com.eit.hoppy.logtail.LogMeta;
+import com.eit.hoppy.util.FileHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.*;
+import java.util.List;
 
 /**
  * description: DirFilePolling负责根据用户配置定期遍历文件夹，将符合日志采集配置的文件加入到FILE_CACHE_MAP中
@@ -22,43 +22,29 @@ public class DirFilePollingThread extends AbstractPollingThread {
      * 需要监控的日志目录
      */
     private String dirPath;
-    /**
-     * 轮询间隔，默认是5000毫秒
-     */
-    private long period = 5000L;
 
     public DirFilePollingThread(String dirPath) {
-        super(DirFilePollingThread.class.getSimpleName());
+        super(DirFilePollingThread.class.getSimpleName(), 1000L);
         this.dirPath = dirPath;
     }
 
     public DirFilePollingThread(String dirPath, long period) {
-        super(DirFilePollingThread.class.getSimpleName());
+        super(DirFilePollingThread.class.getSimpleName(), period);
         this.dirPath = dirPath;
-        this.period = period;
     }
 
     @Override
     void polling() {
-        try {
-            loopFiles();
-            Thread.sleep(period);
-        } catch (InterruptedException e) {
-            logger.error("dir polling", e);
-        }
+        loopFiles();
     }
 
     private void loopFiles() {
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(dirPath))) {
-            for (Path path : stream) {
-                File file = path.toFile();
-                if (!CacheManager.isFileCached(file.getAbsolutePath())) {
-                    CacheManager.addFileCache(new LogMeta(file));
-                }
+        List<File> files = FileHelper.getFileSort(dirPath);
+        files.forEach(file -> {
+            if (!CacheManager.isFileCached(file.getAbsolutePath())) {
+                CacheManager.addFileCache(new LogMeta(file));
             }
-        } catch (IOException | DirectoryIteratorException ex) {
-            logger.warn("loop files error: {}", dirPath, ex);
-        }
+        });
     }
 
 }

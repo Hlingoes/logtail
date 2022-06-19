@@ -9,7 +9,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -83,17 +85,25 @@ public class FileHelper {
         return result.getContent();
     }
 
-    public static List<File> getFileSort(String dir) {
+    public static List<File> getFileSort(String path) {
         List<File> list = new ArrayList<>();
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(dir))) {
-            for (Path path : stream) {
-                list.add(path.toFile());
+        getFiles(path, list);
+        return list.stream().sorted(Comparator.comparing(File::lastModified)).collect(Collectors.toList());
+    }
+
+    public static List<File> getFiles(String realpath, List<File> files) {
+        File realFile = new File(realpath);
+        if (realFile.isDirectory()) {
+            File[] subFiles = realFile.listFiles();
+            for (File file : subFiles) {
+                if (file.isDirectory()) {
+                    getFiles(file.getAbsolutePath(), files);
+                } else {
+                    files.add(file);
+                }
             }
-            return list.stream().sorted(Comparator.comparing(File::lastModified)).collect(Collectors.toList());
-        } catch (IOException | DirectoryIteratorException ex) {
-            logger.warn("get sub files error: {}", dir, ex);
         }
-        return list;
+        return files;
     }
 
     /**
@@ -109,7 +119,6 @@ public class FileHelper {
         char[] buff = new char[bytes];
         try (BufferedReader bfr = Files.newBufferedReader(fPath, Charset.forName("UTF-8"))) {
             int len = bfr.read(buff, 0, bytes);
-            logger.info("len: {}", len);
             return String.valueOf(buff);
         } catch (IOException e) {
             logger.warn("readFirstBytes fail", e);
