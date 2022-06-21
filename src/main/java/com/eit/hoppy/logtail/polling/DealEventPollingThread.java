@@ -16,32 +16,30 @@ import java.util.Queue;
  * @author Hlingoes
  * @date 2022/6/19 16:27
  */
-public class FileEventPollingThread extends AbstractPollingThread {
-    private static Logger logger = LoggerFactory.getLogger(FileEventPollingThread.class);
+public class DealEventPollingThread extends AbstractPollingThread {
+    private static Logger logger = LoggerFactory.getLogger(DealEventPollingThread.class);
 
-    public FileEventPollingThread() {
-        super(FileEventPollingThread.class.getSimpleName(), 500L);
+    public DealEventPollingThread() {
+        super(DealEventPollingThread.class.getSimpleName(), 1000L);
     }
 
-    public FileEventPollingThread(long period) {
-        super(FileEventPollingThread.class.getSimpleName(), period);
+    public DealEventPollingThread(long period) {
+        super(DealEventPollingThread.class.getSimpleName(), period);
     }
 
     @Override
     void polling() {
         LogMeta logMeta = CacheManager.getEventLogMeta();
         if (null == logMeta) {
-            logger.info("no file to read");
             return;
         }
         if (logMeta.getEventEnum() == FileEventEnum.CREATE) {
-            LogFileReader logFileReader = new LogFileReader(logMeta);
+            LogFileReader logFileReader = new LogFileReader(logMeta, getPeriod() / 3);
             CacheManager.addNamedLogFileReader(logMeta.getSourcePath(), logFileReader);
         } else if (logMeta.getEventEnum() == FileEventEnum.MODIFY) {
             // 首先根据sourcePath查找NamedLogFileReaderMap，找到该Reader所在的ReaderQueue，获取ReaderQueue的队列首部的Reader进行日志读取操作
             Queue<LogFileReader> logFileReaders = CacheManager.getLogReaderQueue(logMeta.getSourcePath());
             if (null == logFileReaders) {
-                logger.info("no file to read");
                 return;
             }
             Iterator<LogFileReader> iterator = logFileReaders.iterator();
@@ -73,8 +71,11 @@ public class FileEventPollingThread extends AbstractPollingThread {
              * 对于日志文件的Delete Event，若该Reader所在队列长度大于1（当前解析进度落后，文件虽被删除但日志未采集完成），则忽略此Delete事件；
              * 若Reader所在队列长度为1，设置该Reader的deleteFlag，若一定时间内该Reader没有处理过Modify事件且日志解析完毕则删除该Reader
              */
+            if (null == logFileReaders) {
+                return;
+            }
             if (logFileReaders.size() > 1) {
-                logger.info("file is deleted but log still reading");
+                logger.info("file is deleted but log still reading: {}", logMeta);
                 return;
             } else if (logFileReaders.size() == 1) {
                 LogFileReader logFileReader = logFileReaders.element();

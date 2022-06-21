@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.stream.Collectors;
 
 /**
@@ -43,7 +44,7 @@ public class CacheManager {
     /**
      * 缓存日志内容
      */
-    private static final Queue<String> LOG_CONTENT_QUEUE = new ArrayBlockingQueue<>(10000);
+    private static final BlockingQueue<String> LOG_CONTENT_QUEUE = new ArrayBlockingQueue<>(10000);
 
     public static boolean isFileCached(String filePath) {
         return FILE_CACHE_MAP.containsKey(filePath);
@@ -78,8 +79,16 @@ public class CacheManager {
     }
 
     public static void addLogContent(String content) {
+        logger.info("read line: {}", content);
         LOG_CONTENT_QUEUE.add(content);
     }
+
+    public static List<String> batchReadContents(int batch) {
+        List<String> batchContents = new ArrayList<>(batch);
+        LOG_CONTENT_QUEUE.drainTo(batchContents, batch);
+        return batchContents;
+    }
+
 
     public static void addNamedLogFileReader(String sourcePath, LogFileReader logFileReader) {
         Queue<LogFileReader> queue = NAMED_LOG_FILE_READER_QUEUE_MAP.get(sourcePath);

@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
  */
 public class LogtailApplication {
 
-    static Logger logger = LoggerFactory.getLogger(LogtailApplication.class);
+    private static Logger logger = LoggerFactory.getLogger(LogtailApplication.class);
 
     public static void main(String[] args) {
         RegisterLogTail.startTask();

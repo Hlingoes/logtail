@@ -23,7 +23,6 @@ public abstract class AbstractPollingThread extends Thread {
     public AbstractPollingThread(String name, long period) {
         super(POLLING_THREAD_GROUP, name);
         this.period = period;
-//        setDaemon(true);
     }
 
     @Override

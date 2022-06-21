@@ -30,13 +30,13 @@ public class LogFileReader {
     /**
      * 当前日志解析进度
      */
-    private long readOffset;
+    private long readOffset = 0L;
     /**
      * 单次读取日志的时长，超时则停止，进入下一个循环
      */
-    private long readingTime = 5000L;
+    private long readingTime;
 
-    public LogFileReader(LogMeta logMeta) {
+    public LogFileReader(LogMeta logMeta, long readingTime) {
         this.logMeta = logMeta;
         try {
             randomAccessFile = new RandomAccessFile(logMeta.getFile(), "rw");

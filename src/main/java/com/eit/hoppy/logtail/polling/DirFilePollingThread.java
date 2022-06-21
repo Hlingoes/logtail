@@ -24,7 +24,7 @@ public class DirFilePollingThread extends AbstractPollingThread {
     private String dirPath;
 
     public DirFilePollingThread(String dirPath) {
-        super(DirFilePollingThread.class.getSimpleName(), 1000L);
+        super(DirFilePollingThread.class.getSimpleName(), 5000L);
         this.dirPath = dirPath;
     }
 

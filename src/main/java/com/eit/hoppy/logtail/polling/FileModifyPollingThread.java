@@ -20,7 +20,7 @@ public class FileModifyPollingThread extends AbstractPollingThread {
     private static Logger logger = LoggerFactory.getLogger(FileModifyPollingThread.class);
 
     public FileModifyPollingThread() {
-        super(FileModifyPollingThread.class.getSimpleName(), 500L);
+        super(FileModifyPollingThread.class.getSimpleName(), 1000L);
     }
 
     public FileModifyPollingThread(long period) {
@@ -47,6 +47,7 @@ public class FileModifyPollingThread extends AbstractPollingThread {
                 logMeta.setEventEnum(FileEventEnum.DELETE);
                 CacheManager.removeFileCache(logMeta.getSourcePath());
                 CacheManager.addEventQueue(logMeta);
+                logger.info("file delete: {}", logMeta);
             } else {
                 File reGetFile = new File(logMeta.getSourcePath());
                 String devInode = FileHelper.getFileInode(logMeta.getSourcePath());
@@ -56,6 +57,7 @@ public class FileModifyPollingThread extends AbstractPollingThread {
                     logMeta.setEventEnum(FileEventEnum.CREATE);
                     logMeta.setLastUpdateTime(reGetFile.lastModified());
                     CacheManager.addEventQueue(logMeta);
+                    logger.info("file create: {}", logMeta);
                 } else {
                     /**
                      * 文件系统对inode有回收重用的机制，在文件被删除之后，原来的inode可以被分配给新创建的文件
@@ -67,10 +69,12 @@ public class FileModifyPollingThread extends AbstractPollingThread {
                         logMeta.setEventEnum(FileEventEnum.CREATE);
                         logMeta.setLastUpdateTime(reGetFile.lastModified());
                         CacheManager.addEventQueue(logMeta);
+                        logger.info("file create: {}", logMeta);
                     } else if (reGetFile.lastModified() != logMeta.getLastUpdateTime()) {
                         logMeta.setEventEnum(FileEventEnum.MODIFY);
                         logMeta.setLastUpdateTime(reGetFile.lastModified());
                         CacheManager.addEventQueue(logMeta);
+                        logger.info("file modify: {}", logMeta);
                     }
                 }
             }

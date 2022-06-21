@@ -39,7 +39,6 @@ public class WinCommandExecutor implements CommandExecutor {
         InputStream pIn = null;
         StreamGobbler outputGobbler = null;
         try {
-            logger.info(String.join(" ", commands));
             ProcessBuilder processBuilder = new ProcessBuilder(commands);
             processBuilder.redirectErrorStream(true);
             process = processBuilder.start();
