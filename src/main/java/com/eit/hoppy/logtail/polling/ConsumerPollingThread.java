@@ -4,6 +4,12 @@ import com.eit.hoppy.logtail.CacheManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 
 /**
@@ -26,9 +32,14 @@ public class ConsumerPollingThread extends AbstractPollingThread {
 
     @Override
     void polling() {
-        List<String> batchReadContents = CacheManager.batchReadContents(10);
+        List<String> batchReadContents = CacheManager.batchReadContents(1000);
+        Path path = Paths.get("E:\\hulin_workspace\\file-message-server\\logs\\web-server-info.log");
         batchReadContents.forEach(content -> {
-            logger.info(content);
+            try {
+                Files.write(path, (content + "\n").getBytes(StandardCharsets.UTF_8), StandardOpenOption.APPEND);
+            } catch (IOException e) {
+                logger.warn("consumer content error", e);
+            }
         });
     }
 }

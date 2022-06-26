@@ -42,7 +42,8 @@ public class DirFilePollingThread extends AbstractPollingThread {
         List<File> files = FileHelper.getFileSort(dirPath);
         files.forEach(file -> {
             if (!CacheManager.isFileCached(file.getAbsolutePath())) {
-                CacheManager.addFileCache(new LogMeta(file));
+                LogMeta logMeta = new LogMeta(file);
+                CacheManager.addFileCreateCache(logMeta);
             }
         });
     }

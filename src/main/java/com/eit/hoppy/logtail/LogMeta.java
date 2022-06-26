@@ -50,7 +50,7 @@ public class LogMeta {
     public LogMeta(File file) {
         this.file = file;
         devInode = FileHelper.getFileInode(file.getAbsolutePath());
-        lastUpdateTime = 0L;
+        lastUpdateTime = file.lastModified();
         sourcePath = file.getAbsolutePath();
         signBytes = file.length() > 1024 ? 1024 : (int) file.length();
         signature = calSignature();
@@ -132,7 +132,6 @@ public class LogMeta {
                 .add("signature=" + signature)
                 .add("devInode='" + devInode + "'")
                 .add("lastUpdateTime=" + lastUpdateTime)
-                .add("file=" + file)
                 .add("eventEnum=" + eventEnum)
                 .toString();
     }

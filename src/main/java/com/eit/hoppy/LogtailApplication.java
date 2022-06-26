@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * description:
+ * description: 文件会从末尾读取
  *
  * @author Hlingoes 2022/6/5
  * @citation Created by jaren.han on 2020-01-10.

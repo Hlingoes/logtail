@@ -1,3 +1,5 @@
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.core.util.StatusPrinter;
 import com.eit.hoppy.util.FileHelper;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -5,13 +7,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -43,80 +44,27 @@ public class FileTailTest {
 
     @Test
     public void writeFile() {
-//        // File file=new File("D:\\quecspace\\LogTail\\text.txt");
-//        try {
-//            FileOutputStream fileOutputStream = new FileOutputStream("D:\\quecspace\\LogTail\\666.txt");
-//            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, "UTF-8");
-//            BufferedWriter out = new BufferedWriter(outputStreamWriter);
-//            for (int i = 1; i < 60; i++) {
-//                out.write(new Date().toString() + " " + UUID.randomUUID().toString());
-//                out.newLine();
-//                out.flush();
-//                Thread.sleep(1000);
-//            }
-//            out.close();
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-
-    }
-
-    @Test
-    public void listTest() {
-//        LinkedList linkedList=new LinkedList();
-//        for(int i=0;i<5;i++){
-//            linkedList.add(i);
-//        }
-//        System.out.print(linkedList.getFirst());
-//        System.out.print(linkedList.getFirst());
-//        System.out.print(linkedList.getFirst());
-//        System.out.print(linkedList.getFirst());
-//        System.out.print(linkedList.getFirst());
-        logger.info("ttt");
-
-    }
-
-    @Test
-    public void resetFile() {
-//        File file =new File("D:\\quecspace\\LogTail\\666.txt");
-//        try {
-//            FileWriter fileWriter =new FileWriter(file);
-//            fileWriter.write("");
-//            fileWriter.flush();
-//            fileWriter.close();
-//
-//            writeFile();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-    }
-
-    @Test
-    public void getFile() {
-        List<File> files = FileHelper.getFileSort("D:\\opt\\logs");
-        for (File file : files) {
-            logger.info(file.getAbsolutePath());
+        String className = getClass().getCanonicalName();
+        for (int i = 1; i < 10000; i++) {
+            logger.info(className + className + className + className + i);
         }
     }
 
     @Test
     public void ListTest() {
-        List<String> list = new ArrayList<>();
-        list.add("aa");
-        list.add("bb");
-        list.add("cc");
-        for (String value : list) {
-            logger.info(value);
-        }
+        // 获取classpath路径
+        String s = Thread.currentThread().getContextClassLoader().getResource("").getPath();
+        System.out.println("classpath : " + s);
 
-        LinkedList<String> linkedList = new LinkedList<>();
-        linkedList.add("ab");
-        linkedList.add("bc");
-        linkedList.add("cd");
-        Iterator<String> iterator = linkedList.listIterator();
-        String value;
-        while ((value = iterator.next()) != null) {
-            logger.info(value);
-        }
+        System.out.println("----> logback start");
+        logger.trace("--> Hello trace.");
+        logger.debug("--> Hello debug.");
+        logger.info("--> Hello info.");
+        logger.warn("--> Goodbye warn.");
+        logger.error("--> Goodbye error.");
+
+        //打印 Logback 内部状态
+        LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
+        StatusPrinter.print(lc);
     }
 }

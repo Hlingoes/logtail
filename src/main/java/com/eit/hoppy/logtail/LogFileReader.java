@@ -3,7 +3,6 @@ package com.eit.hoppy.logtail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
@@ -22,7 +21,7 @@ public class LogFileReader {
     /**
      * 用于标识该文件是否被删除
      */
-    private Boolean deleteFlag;
+    private boolean deleteFlag;
     /**
      * 文件指针
      */
@@ -32,45 +31,55 @@ public class LogFileReader {
      */
     private long readOffset = 0L;
     /**
-     * 单次读取日志的时长，超时则停止，进入下一个循环
+     * 单次读取的结束时间
      */
-    private long readingTime;
+    private long readEndTime;
+    /**
+     * 按行读取的日志
+     */
+    String lineContent;
 
-    public LogFileReader(LogMeta logMeta, long readingTime) {
+    public LogFileReader(LogMeta logMeta) {
         this.logMeta = logMeta;
-        try {
-            randomAccessFile = new RandomAccessFile(logMeta.getFile(), "rw");
-        } catch (FileNotFoundException e) {
-            logger.error("open file fail: {}", logMeta, e);
-        }
+        this.readOffset = logMeta.getFile().length();
     }
 
-    public void readLog() {
-        long startTime = System.currentTimeMillis();
-        long endTime = startTime + readingTime;
-        try {
-            long fileLength = randomAccessFile.length();
-            if (fileLength > readOffset) {
-                randomAccessFile.seek(readOffset);
-                String content;
-                while (System.currentTimeMillis() < endTime && (content = randomAccessFile.readLine()) != null) {
-                    CacheManager.addLogContent(content);
-                }
-                readOffset = randomAccessFile.getFilePointer();
-                randomAccessFile.close();
-            } else {
+    /**
+     * description: 单次读取日志的时长，超时则停止，进入下一个循环
+     *
+     * @param readingPeriod
+     * @return void
+     * @author Hlingoes 2022/6/26
+     */
+    public void readLog(long readingPeriod) {
+        long fileLength = logMeta.getFile().length();
+        if (fileLength <= readOffset) {
+            if (logger.isDebugEnabled()) {
                 logger.info("no new content to read: {}", logMeta);
             }
-        } catch (Exception e) {
-            logger.error("get current log", e);
-        } finally {
-            if (null != randomAccessFile) {
-                try {
-                    randomAccessFile.close();
-                } catch (IOException e) {
-                    logger.warn("read error", e);
-                }
+            return;
+        }
+        long startTime = System.currentTimeMillis();
+        this.readEndTime = startTime + readingPeriod;
+        if (logger.isDebugEnabled()) {
+            logger.info("reading: {}, during: [{}, {}]", logMeta, startTime, readEndTime);
+        }
+        try {
+            randomAccessFile = new RandomAccessFile(logMeta.getFile(), "r");
+            randomAccessFile.seek(readOffset);
+            while (System.currentTimeMillis() < readEndTime && (lineContent = randomAccessFile.readLine()) != null) {
+                CacheManager.addLogContent(lineContent);
             }
+            readOffset = randomAccessFile.getFilePointer();
+        } catch (IOException e) {
+            logger.error("get current log error", e);
+        } finally {
+            try {
+                randomAccessFile.close();
+            } catch (IOException e) {
+                logger.error("get current log error", e);
+            }
+            randomAccessFile = null;
         }
     }
 
@@ -78,12 +87,8 @@ public class LogFileReader {
         return logMeta.getFile().length() == readOffset;
     }
 
-    public void close() {
-        try {
-            randomAccessFile.close();
-        } catch (IOException e) {
-            logger.warn("close reader error: {}", logMeta, e);
-        }
+    public boolean isExpired(long period) {
+        return System.currentTimeMillis() > (logMeta.getLastUpdateTime() + period);
     }
 
     public LogMeta getLogMeta() {
@@ -94,11 +99,11 @@ public class LogFileReader {
         this.logMeta = logMeta;
     }
 
-    public Boolean getDeleteFlag() {
+    public boolean getDeleteFlag() {
         return deleteFlag;
     }
 
-    public void setDeleteFlag(Boolean deleteFlag) {
+    public void setDeleteFlag(boolean deleteFlag) {
         this.deleteFlag = deleteFlag;
     }
 

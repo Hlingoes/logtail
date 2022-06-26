@@ -34,7 +34,6 @@ public class RotateReaderPollingThread extends AbstractPollingThread {
             // 一定时间(period)内该Reader没有处理过Modify事件且日志解析完毕则删除该Reader
             if (System.currentTimeMillis() > (getPeriod() + logFileReader.getLogMeta().getLastUpdateTime())
                     && logFileReader.finishReading()) {
-                logFileReader.close();
                 entries.remove();
             }
         }
