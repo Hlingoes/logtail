@@ -1,11 +1,10 @@
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.util.StatusPrinter;
-import com.eit.hoppy.util.FileHelper;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -13,7 +12,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.List;
 
 /**
  * Created by jaren.han on 2020-01-08.
@@ -47,6 +45,24 @@ public class FileTailTest {
         String className = getClass().getCanonicalName();
         for (int i = 1; i < 10000; i++) {
             logger.info(className + className + className + className + i);
+        }
+    }
+
+    @Test
+    public void writeFileTest() {
+        Path path = Paths.get("E:\\hulin_workspace\\logtail\\logtail\\testLongTimeRead.txt");
+        String className = getClass().getCanonicalName();
+        try (BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8, StandardOpenOption.APPEND)) {
+            for (int i = 1; i < 10000; i++) {
+                writer.write(className + className + className + className + i + "\n");
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

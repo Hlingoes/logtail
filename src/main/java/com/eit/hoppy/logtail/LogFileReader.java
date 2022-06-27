@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Objects;
 
 /**
  * description: 读取日志
@@ -52,39 +53,51 @@ public class LogFileReader {
      * @author Hlingoes 2022/6/26
      */
     public void readLog(long readingPeriod) {
-        long fileLength = logMeta.getFile().length();
-        if (fileLength <= readOffset) {
+        if (finishReading()) {
             if (logger.isDebugEnabled()) {
-                logger.info("no new content to read: {}", logMeta);
+                logger.debug("no new content to read: {}", logMeta);
             }
             return;
         }
         long startTime = System.currentTimeMillis();
         this.readEndTime = startTime + readingPeriod;
         if (logger.isDebugEnabled()) {
-            logger.info("reading: {}, during: [{}, {}]", logMeta, startTime, readEndTime);
+            logger.debug("reading: {}, during: [{}, {}]", logMeta, startTime, readEndTime);
         }
         try {
-            randomAccessFile = new RandomAccessFile(logMeta.getFile(), "r");
+            if (Objects.isNull(randomAccessFile)) {
+                // 重新获取句柄
+                randomAccessFile = new RandomAccessFile(logMeta.getFile(), "r");
+            }
             randomAccessFile.seek(readOffset);
             while (System.currentTimeMillis() < readEndTime && (lineContent = randomAccessFile.readLine()) != null) {
                 CacheManager.addLogContent(lineContent);
             }
             readOffset = randomAccessFile.getFilePointer();
+            // 释放句柄，否则在Windows下，文件无法操作
+            releasePoinerIfFinished();
         } catch (IOException e) {
             logger.error("get current log error", e);
-        } finally {
-            try {
-                randomAccessFile.close();
-            } catch (IOException e) {
-                logger.error("get current log error", e);
-            }
-            randomAccessFile = null;
         }
     }
 
     public boolean finishReading() {
-        return logMeta.getFile().length() == readOffset;
+        if (logMeta.getFile().exists()) {
+            return logMeta.getFile().length() == readOffset;
+        }
+        return true;
+    }
+
+    private void releasePoinerIfFinished() {
+        if (finishReading()) {
+            try {
+                randomAccessFile.close();
+            } catch (IOException e) {
+                logger.error("get current log error", e);
+            } finally {
+                randomAccessFile = null;
+            }
+        }
     }
 
     public boolean isExpired(long period) {
