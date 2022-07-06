@@ -2,7 +2,8 @@ package com.eit.hoppy.client;
 
 import com.eit.hoppy.logtail.CacheManager;
 import com.eit.hoppy.logtail.LogMeta;
-import com.eit.hoppy.logtail.polling.*;
+import com.eit.hoppy.logtail.LogMetaFactory;
+import com.eit.hoppy.logtail.thread.*;
 import com.eit.hoppy.util.FileHelper;
 import com.eit.hoppy.util.IniFileReader;
 import org.slf4j.Logger;
@@ -19,9 +20,9 @@ import java.util.List;
  * @author Hlingoes
  * @date 2022/6/19 21:45
  */
-public class RegisterLogTail {
+public class LogTailRegisterClient {
 
-    private static Logger logger = LoggerFactory.getLogger(RegisterLogTail.class);
+    private static Logger logger = LoggerFactory.getLogger(LogTailRegisterClient.class);
 
     private static List<AbstractPollingThread> pollingThreads = new ArrayList<>();
 
@@ -39,7 +40,7 @@ public class RegisterLogTail {
             int eventDealInterval = iniReader.getIntValue("event_deal_interval", 5000);
             int rotateInterval = iniReader.getIntValue("rotate_interval", 5 * 60 * 1000);
             int consumeInterval = iniReader.getIntValue("consume_interval", 1000);
-            initFileCache(dir, eventDealInterval);
+            initFileCache(dir);
             AbstractPollingThread dirThread = new DirFilePollingThread(dir, dirScanInterval);
             AbstractPollingThread fileThread = new FileModifyPollingThread(eventDealInterval);
             AbstractPollingThread rotateThread = new RotateReaderPollingThread(rotateInterval);
@@ -53,10 +54,10 @@ public class RegisterLogTail {
         }
     }
 
-    private static void initFileCache(String dir, long period) {
+    private static void initFileCache(String dir) {
         List<File> files = FileHelper.getFileSort(dir);
         files.forEach(file -> {
-            LogMeta logMeta = new LogMeta(file);
+            LogMeta logMeta = LogMetaFactory.createLogMeta(file);
             CacheManager.addFileCreateCache(logMeta);
         });
     }

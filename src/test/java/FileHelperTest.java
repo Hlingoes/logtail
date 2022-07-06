@@ -1,17 +1,23 @@
 import com.eit.hoppy.command.CommandExecutor;
 import com.eit.hoppy.command.ExecuteResult;
 import com.eit.hoppy.command.WinCommandExecutor;
+import com.eit.hoppy.logtail.CacheManager;
+import com.eit.hoppy.logtail.LogMeta;
+import com.eit.hoppy.logtail.LogMetaFactory;
 import com.eit.hoppy.util.FileHelper;
+import com.eit.hoppy.util.SerializationUtils;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * description:
@@ -115,6 +121,22 @@ public class FileHelperTest {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    @Test
+    public void testWriteObject() throws IOException {
+        String fileName = "E:\\hulin_workspace\\logtail\\test.dat";
+        File testFile = new File("E:\\hulin_workspace\\logtail\\pom.xml");
+        LogMeta logMeta = LogMetaFactory.createLogMeta(testFile);
+        CacheManager.addFileCreateCache(logMeta);
+        SerializationUtils.writeSerializeObject(fileName, CacheManager.getFileCacheMap());
+    }
+
+    @Test
+    public void testReadObject() throws IOException {
+        String fileName = "E:\\hulin_workspace\\logtail\\test.dat";
+        Map<String, LogMeta> obj = (Map<String, LogMeta>) SerializationUtils.readDeserialize(fileName);
+        logger.info("{}", obj.size());
     }
 
 }

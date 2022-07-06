@@ -1,4 +1,4 @@
-package com.eit.hoppy.logtail.polling;
+package com.eit.hoppy.logtail.thread;
 
 import com.eit.hoppy.logtail.CacheManager;
 import com.eit.hoppy.logtail.LogFileReader;
@@ -29,10 +29,11 @@ public class RotateReaderPollingThread extends AbstractPollingThread {
     void polling() {
         Map<String, LogFileReader> rotateLogFileReaderMap = CacheManager.getRotateLogFileReaderMap();
         Iterator<Map.Entry<String, LogFileReader>> entries = rotateLogFileReaderMap.entrySet().iterator();
+        LogFileReader logFileReader;
         while (entries.hasNext()) {
-            LogFileReader logFileReader = entries.next().getValue();
+            logFileReader = entries.next().getValue();
             // 一定时间(period)内该Reader没有处理过Modify事件且日志解析完毕则删除该Reader
-            if (System.currentTimeMillis() > (getPeriod() + logFileReader.getLogMeta().getLastUpdateTime())
+            if (System.currentTimeMillis() > (super.getPeriod() + logFileReader.getLogMeta().getLastUpdateTime())
                     && logFileReader.finishReading()) {
                 entries.remove();
             }

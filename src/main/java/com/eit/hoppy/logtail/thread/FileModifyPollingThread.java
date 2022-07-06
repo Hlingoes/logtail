@@ -1,9 +1,9 @@
-package com.eit.hoppy.logtail.polling;
+package com.eit.hoppy.logtail.thread;
 
 import com.eit.hoppy.logtail.CacheManager;
-import com.eit.hoppy.logtail.FileEventEnum;
 import com.eit.hoppy.logtail.LogFileReader;
 import com.eit.hoppy.logtail.LogMeta;
+import com.eit.hoppy.logtail.LogMetaFactory;
 import com.eit.hoppy.util.FileHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,9 +43,11 @@ public class FileModifyPollingThread extends AbstractPollingThread {
     private void pollingEvent() {
         // 按照lastUpdateTime排序，asc
         List<LogMeta> logMetas = CacheManager.getSortedCacheLogMeta();
+        File file;
         for (LogMeta logMeta : logMetas) {
             // 判断文件是否存在
-            if (!logMeta.getFile().exists()) {
+            file = new File(logMeta.getSourcePath());
+            if (!file.exists()) {
                 fileDelete(logMeta);
             } else {
                 File reGetFile = new File(logMeta.getSourcePath());
@@ -76,7 +78,6 @@ public class FileModifyPollingThread extends AbstractPollingThread {
      * @author Hlingoes 2022/6/26
      */
     private void fileDelete(LogMeta logMeta) {
-        logMeta.setEventEnum(FileEventEnum.DELETE);
         Queue<LogFileReader> logFileReaders = CacheManager.getNamedLogFileReaderQueue(logMeta.getSourcePath());
         LogFileReader logFileReader = logFileReaders.poll();
         /**
@@ -102,7 +103,6 @@ public class FileModifyPollingThread extends AbstractPollingThread {
      * @author Hlingoes 2022/6/26
      */
     private void fileModify(LogMeta logMeta, long lastModified) {
-        logMeta.setEventEnum(FileEventEnum.MODIFY);
         logMeta.setLastUpdateTime(lastModified);
         fileModify(logMeta);
     }
@@ -118,11 +118,11 @@ public class FileModifyPollingThread extends AbstractPollingThread {
         // 首先根据sourcePath查找NamedLogFileReaderMap，找到该Reader所在的ReaderQueue，获取ReaderQueue的队列首部的Reader进行日志读取操作
         Queue<LogFileReader> logFileReaders = CacheManager.getLogReaderQueue(logMeta.getSourcePath());
         LogFileReader logFileReader = logFileReaders.poll();
-        int signature = logMeta.calSignature();
+        int signature = LogMetaFactory.calSignature(logMeta.getSourcePath(), logMeta.getSignBytes());
         if (signature != logMeta.getSignature()) {
             // 日志读取时首先检查signature是否改变，若改变则认为日志被truncate写，从文件头开始读取；若signature未改变，则从readOffset处开始读取并更新readOffset
             logMeta.setSignature(signature);
-            logFileReader.setReadOffset(0L);
+            logMeta.setReadOffset(0L);
             logFileReader.readLog(super.getPeriod());
             recycleModifyEvent(logMeta, logFileReader);
         } else if (logFileReader.finishReading() && logFileReaders.size() == 1) {
@@ -152,7 +152,6 @@ public class FileModifyPollingThread extends AbstractPollingThread {
      */
     private void fileCreate(LogMeta logMeta, long lastModified, String devInode) {
         logMeta.setDevInode(devInode);
-        logMeta.setEventEnum(FileEventEnum.CREATE);
         logMeta.setLastUpdateTime(lastModified);
         CacheManager.addCreateEvent(logMeta);
     }

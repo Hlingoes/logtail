@@ -3,6 +3,7 @@ package com.eit.hoppy.logtail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Objects;
@@ -16,9 +17,13 @@ import java.util.Objects;
 public class LogFileReader {
     private static Logger logger = LoggerFactory.getLogger(LogFileReader.class);
     /**
-     * 读取的文件
+     * 点位文件信息
      */
     private LogMeta logMeta;
+    /**
+     * 读取的文件
+     */
+    private File file;
     /**
      * 用于标识该文件是否被删除
      */
@@ -27,10 +32,6 @@ public class LogFileReader {
      * 文件指针
      */
     private RandomAccessFile randomAccessFile;
-    /**
-     * 当前日志解析进度
-     */
-    private long readOffset = 0L;
     /**
      * 单次读取的结束时间
      */
@@ -42,7 +43,7 @@ public class LogFileReader {
 
     public LogFileReader(LogMeta logMeta) {
         this.logMeta = logMeta;
-        this.readOffset = logMeta.getFile().length();
+        this.file = new File(logMeta.getSourcePath());
     }
 
     /**
@@ -67,25 +68,18 @@ public class LogFileReader {
         try {
             if (Objects.isNull(randomAccessFile)) {
                 // 重新获取句柄
-                randomAccessFile = new RandomAccessFile(logMeta.getFile(), "r");
+                randomAccessFile = new RandomAccessFile(file, "r");
             }
-            randomAccessFile.seek(readOffset);
+            randomAccessFile.seek(logMeta.getReadOffset());
             while (System.currentTimeMillis() < readEndTime && (lineContent = randomAccessFile.readLine()) != null) {
                 CacheManager.addLogContent(lineContent);
+                logMeta.setReadOffset(randomAccessFile.getFilePointer());
             }
-            readOffset = randomAccessFile.getFilePointer();
             // 释放句柄，否则在Windows下，文件无法操作
             releasePoinerIfFinished();
         } catch (IOException e) {
             logger.error("get current log error", e);
         }
-    }
-
-    public boolean finishReading() {
-        if (logMeta.getFile().exists()) {
-            return logMeta.getFile().length() == readOffset;
-        }
-        return true;
     }
 
     private void releasePoinerIfFinished() {
@@ -98,6 +92,20 @@ public class LogFileReader {
                 randomAccessFile = null;
             }
         }
+    }
+
+    /**
+     * description: 文件是否读取完成
+     *
+     * @param
+     * @return boolean
+     * @author Hlingoes 2022/7/6
+     */
+    public boolean finishReading() {
+        if (file.exists()) {
+            return file.length() == logMeta.getReadOffset();
+        }
+        return true;
     }
 
     public boolean isExpired(long period) {
@@ -118,14 +126,6 @@ public class LogFileReader {
 
     public void setDeleteFlag(boolean deleteFlag) {
         this.deleteFlag = deleteFlag;
-    }
-
-    public long getReadOffset() {
-        return readOffset;
-    }
-
-    public void setReadOffset(long readOffset) {
-        this.readOffset = readOffset;
     }
 
 }

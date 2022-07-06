@@ -1,4 +1,4 @@
-package com.eit.hoppy.logtail.polling;
+package com.eit.hoppy.logtail.thread;
 
 import com.eit.hoppy.logtail.CacheManager;
 import org.slf4j.Logger;

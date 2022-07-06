@@ -114,4 +114,8 @@ public class CacheManager {
         }
     }
 
+    public static Map<String, LogMeta> getFileCacheMap() {
+        return FILE_CACHE_MAP;
+    }
+
 }

@@ -118,7 +118,7 @@ public class FileHelper {
         Path fPath = Paths.get(filePath);
         char[] buff = new char[bytes];
         try (BufferedReader bfr = Files.newBufferedReader(fPath, Charset.forName("UTF-8"))) {
-            int len = bfr.read(buff, 0, bytes);
+            bfr.read(buff, 0, bytes);
             return String.valueOf(buff);
         } catch (IOException e) {
             logger.warn("readFirstBytes fail", e);

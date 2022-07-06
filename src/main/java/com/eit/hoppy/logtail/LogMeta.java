@@ -3,15 +3,17 @@ package com.eit.hoppy.logtail;
 import com.eit.hoppy.util.FileHelper;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.StringJoiner;
 
 /**
- * description: 日志文件的元数据
+ * description: 日志文件的点位文件数据
  *
  * @author Hlingoes
  * @date 2022/6/11 20:41
  */
-public class LogMeta {
+public class LogMeta implements Serializable {
+
     /**
      * 文件路径
      */
@@ -33,39 +35,12 @@ public class LogMeta {
      */
     private long lastUpdateTime;
     /**
-     * 日志文件
+     * 当前日志解析进度
      */
-    private File file;
-    /**
-     * 文件事件
-     */
-    private FileEventEnum eventEnum;
+    private long readOffset = 0L;
 
-    /**
-     * description: 默认是CREATE事件，lastUpdateTime = 0L
-     *
-     * @param file
-     * @author Hlingoes 2022/6/12
-     */
-    public LogMeta(File file) {
-        this.file = file;
-        devInode = FileHelper.getFileInode(file.getAbsolutePath());
-        lastUpdateTime = file.lastModified();
-        sourcePath = file.getAbsolutePath();
-        signBytes = file.length() > 1024 ? 1024 : (int) file.length();
-        signature = calSignature();
-        eventEnum = FileEventEnum.CREATE;
-    }
+    public LogMeta() {
 
-    /**
-     * description: 文件的签名,使用日志文件的前bytes字节的hash
-     *
-     * @return int
-     * @author Hlingoes 2022/6/19
-     */
-    public int calSignature() {
-        String firstBytes = FileHelper.readFirstBytes(sourcePath, signBytes);
-        return firstBytes.hashCode();
     }
 
     public String getSourcePath() {
@@ -108,20 +83,12 @@ public class LogMeta {
         this.lastUpdateTime = lastUpdateTime;
     }
 
-    public File getFile() {
-        return file;
+    public long getReadOffset() {
+        return readOffset;
     }
 
-    public void setFile(File file) {
-        this.file = file;
-    }
-
-    public FileEventEnum getEventEnum() {
-        return eventEnum;
-    }
-
-    public void setEventEnum(FileEventEnum eventEnum) {
-        this.eventEnum = eventEnum;
+    public void setReadOffset(long readOffset) {
+        this.readOffset = readOffset;
     }
 
     @Override
@@ -132,7 +99,7 @@ public class LogMeta {
                 .add("signature=" + signature)
                 .add("devInode='" + devInode + "'")
                 .add("lastUpdateTime=" + lastUpdateTime)
-                .add("eventEnum=" + eventEnum)
+                .add("readOffset=" + readOffset)
                 .toString();
     }
 }

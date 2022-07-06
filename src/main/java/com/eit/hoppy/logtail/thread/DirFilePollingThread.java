@@ -1,7 +1,8 @@
-package com.eit.hoppy.logtail.polling;
+package com.eit.hoppy.logtail.thread;
 
 import com.eit.hoppy.logtail.CacheManager;
 import com.eit.hoppy.logtail.LogMeta;
+import com.eit.hoppy.logtail.LogMetaFactory;
 import com.eit.hoppy.util.FileHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +43,7 @@ public class DirFilePollingThread extends AbstractPollingThread {
         List<File> files = FileHelper.getFileSort(dirPath);
         files.forEach(file -> {
             if (!CacheManager.isFileCached(file.getAbsolutePath())) {
-                LogMeta logMeta = new LogMeta(file);
+                LogMeta logMeta = LogMetaFactory.createLogMeta(file);
                 CacheManager.addFileCreateCache(logMeta);
             }
         });
