@@ -1,8 +1,11 @@
 package com.eit.hoppy.logtail;
 
+import com.eit.hoppy.util.SerializationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -17,6 +20,11 @@ import java.util.stream.Collectors;
  */
 public class CacheManager {
     private static Logger logger = LoggerFactory.getLogger(CacheManager.class);
+
+    /**
+     * 记录点位信息的序列化问价
+     */
+    private static final File lOG_META_CACHE_FILE = new File("data/log_meta_cache.dat");
     /**
      * 缓存由DirFilePolling线程定时遍历用户配置的目录生成的符合条件的元数据
      * key: sourcePath
@@ -40,6 +48,17 @@ public class CacheManager {
      * 缓存日志内容
      */
     private static final BlockingQueue<String> LOG_CONTENT_QUEUE = new ArrayBlockingQueue<>(10000);
+
+    static {
+        if (lOG_META_CACHE_FILE.exists() && lOG_META_CACHE_FILE.length() > 0) {
+            // 先读取点位文件
+            Map<String, LogMeta> cacheMap = readCacheMapFile();
+            FILE_CACHE_MAP.putAll(cacheMap);
+            logger.info("init cache map data from: {}", lOG_META_CACHE_FILE.getAbsolutePath());
+        } else {
+            logger.warn("no cache data: {}", lOG_META_CACHE_FILE.getAbsolutePath());
+        }
+    }
 
     public static boolean isFileCached(String filePath) {
         return FILE_CACHE_MAP.containsKey(filePath);
@@ -114,8 +133,21 @@ public class CacheManager {
         }
     }
 
-    public static Map<String, LogMeta> getFileCacheMap() {
-        return FILE_CACHE_MAP;
+    public static void writeCacheMapFile() {
+        try {
+            SerializationUtils.writeSerializeObject(lOG_META_CACHE_FILE, FILE_CACHE_MAP);
+        } catch (IOException e) {
+            logger.warn("write file fail", e);
+        }
+    }
+
+    private static Map<String, LogMeta> readCacheMapFile() {
+        try {
+            return (Map<String, LogMeta>) SerializationUtils.readDeserialize(lOG_META_CACHE_FILE);
+        } catch (IOException e) {
+            logger.warn("read file fail", e);
+        }
+        return new HashMap<>();
     }
 
 }

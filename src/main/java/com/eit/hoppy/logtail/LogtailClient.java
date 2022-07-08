@@ -1,8 +1,5 @@
-package com.eit.hoppy.client;
+package com.eit.hoppy.logtail;
 
-import com.eit.hoppy.logtail.CacheManager;
-import com.eit.hoppy.logtail.LogMeta;
-import com.eit.hoppy.logtail.LogMetaFactory;
 import com.eit.hoppy.logtail.thread.*;
 import com.eit.hoppy.util.FileHelper;
 import com.eit.hoppy.util.IniFileReader;
@@ -13,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * description: 读取配置，注册LogTail
@@ -20,18 +18,19 @@ import java.util.List;
  * @author Hlingoes
  * @date 2022/6/19 21:45
  */
-public class LogTailRegisterClient {
+public class LogtailClient {
 
-    private static Logger logger = LoggerFactory.getLogger(LogTailRegisterClient.class);
+    private static Logger logger = LoggerFactory.getLogger(LogtailClient.class);
 
     private static List<AbstractPollingThread> pollingThreads = new ArrayList<>();
 
-    public static void startTask() {
-        registerTask();
+
+    public static void start() {
+        initThread();
         pollingThreads.forEach(pollingThread -> pollingThread.start());
     }
 
-    private static void registerTask() {
+    private static void initThread() {
         IniFileReader iniReader;
         try {
             iniReader = new IniFileReader("logtail.properties");

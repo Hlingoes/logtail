@@ -1,6 +1,6 @@
 package com.eit.hoppy;
 
-import com.eit.hoppy.client.LogTailRegisterClient;
+import com.eit.hoppy.logtail.LogtailClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,10 +15,10 @@ public class LogtailApplication {
     private static Logger logger = LoggerFactory.getLogger(LogtailApplication.class);
 
     public static void main(String[] args) {
-        LogTailRegisterClient.startTask();
+        LogtailClient.start();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             // send de-registration request before destroy
-            LogTailRegisterClient.stopTask();
+            LogtailClient.stopTask();
         }));
     }
 }

@@ -125,11 +125,10 @@ public class FileHelperTest {
 
     @Test
     public void testWriteObject() throws IOException {
-        String fileName = "E:\\hulin_workspace\\logtail\\test.dat";
         File testFile = new File("E:\\hulin_workspace\\logtail\\pom.xml");
         LogMeta logMeta = LogMetaFactory.createLogMeta(testFile);
         CacheManager.addFileCreateCache(logMeta);
-        SerializationUtils.writeSerializeObject(fileName, CacheManager.getFileCacheMap());
+        CacheManager.writeCacheMapFile();
     }
 
     @Test
@@ -137,6 +136,12 @@ public class FileHelperTest {
         String fileName = "E:\\hulin_workspace\\logtail\\test.dat";
         Map<String, LogMeta> obj = (Map<String, LogMeta>) SerializationUtils.readDeserialize(fileName);
         logger.info("{}", obj.size());
+    }
+
+    @Test
+    public void testFileFind() throws IOException {
+        File testFile = new File("data\\log_meta_cache.dat");
+        logger.info("{}", testFile.exists());
     }
 
 }

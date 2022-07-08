@@ -1,8 +1,8 @@
 package com.eit.hoppy.util;
 
 import java.io.*;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
@@ -13,6 +13,19 @@ import java.nio.file.Paths;
  */
 public class SerializationUtils {
     public SerializationUtils() {
+
+    }
+
+    /**
+     * description: 将对象序列化后，写入文件
+     *
+     * @param file
+     * @param object
+     * @return void
+     * @author Hlingoes 2022/7/6
+     */
+    public static void writeSerializeObject(File file, Object object) throws IOException {
+        writeSerializeObject(file.getAbsolutePath(), object);
     }
 
     /**
@@ -25,9 +38,23 @@ public class SerializationUtils {
      */
     public static void writeSerializeObject(String fileName, Object object) throws IOException {
         String tmpFileName = fileName + ".tmp";
-        File tmpFile = new File(tmpFileName);
-        Files.write(Paths.get(tmpFileName), serialize(object));
-        tmpFile.renameTo(new File(fileName));
+        Path targetPath = Paths.get(fileName);
+        Path tmpPath = Paths.get(tmpFileName);
+        Files.write(tmpPath, serialize(object));
+        Files.delete(targetPath);
+        Files.copy(tmpPath, Paths.get(fileName));
+        Files.delete(tmpPath);
+    }
+
+    /**
+     * description: 读取文件，序列化为对象
+     *
+     * @param file
+     * @return java.lang.Object
+     * @author Hlingoes 2022/7/6
+     */
+    public static Object readDeserialize(File file) throws IOException {
+        return readDeserialize(file.getAbsolutePath());
     }
 
     /**
