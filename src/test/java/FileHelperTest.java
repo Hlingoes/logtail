@@ -133,8 +133,8 @@ public class FileHelperTest {
 
     @Test
     public void testReadObject() throws IOException {
-        String fileName = "E:\\hulin_workspace\\logtail\\test.dat";
-        Map<String, LogMeta> obj = (Map<String, LogMeta>) SerializationUtils.readDeserialize(fileName);
+        File testFile = new File("data\\log_meta_cache.dat");
+        Map<String, LogMeta> obj = (Map<String, LogMeta>) SerializationUtils.readDeserialize(testFile.getAbsolutePath());
         logger.info("{}", obj.size());
     }
 

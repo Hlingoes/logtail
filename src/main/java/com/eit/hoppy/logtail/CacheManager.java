@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -49,17 +51,6 @@ public class CacheManager {
      */
     private static final BlockingQueue<String> LOG_CONTENT_QUEUE = new ArrayBlockingQueue<>(10000);
 
-    static {
-        if (lOG_META_CACHE_FILE.exists() && lOG_META_CACHE_FILE.length() > 0) {
-            // 先读取点位文件
-            Map<String, LogMeta> cacheMap = readCacheMapFile();
-            FILE_CACHE_MAP.putAll(cacheMap);
-            logger.info("init cache map data from: {}", lOG_META_CACHE_FILE.getAbsolutePath());
-        } else {
-            logger.warn("no cache data: {}", lOG_META_CACHE_FILE.getAbsolutePath());
-        }
-    }
-
     public static boolean isFileCached(String filePath) {
         return FILE_CACHE_MAP.containsKey(filePath);
     }
@@ -92,6 +83,12 @@ public class CacheManager {
     public static List<String> batchReadContents(int batch) {
         List<String> batchContents = new ArrayList<>(batch);
         LOG_CONTENT_QUEUE.drainTo(batchContents, batch);
+        return batchContents;
+    }
+
+    public static List<String> remainContents() {
+        List<String> batchContents = new ArrayList<>(LOG_CONTENT_QUEUE.size());
+        LOG_CONTENT_QUEUE.drainTo(batchContents, LOG_CONTENT_QUEUE.size());
         return batchContents;
     }
 
@@ -141,11 +138,25 @@ public class CacheManager {
         }
     }
 
-    private static Map<String, LogMeta> readCacheMapFile() {
-        try {
-            return (Map<String, LogMeta>) SerializationUtils.readDeserialize(lOG_META_CACHE_FILE);
-        } catch (IOException e) {
-            logger.warn("read file fail", e);
+    public static Map<String, LogMeta> readCacheMapFile() {
+        if (!lOG_META_CACHE_FILE.exists()) {
+            try {
+                lOG_META_CACHE_FILE.createNewFile();
+            } catch (IOException e) {
+                logger.warn("create cache file fail", e);
+            }
+            return new HashMap<>();
+        }
+        if (lOG_META_CACHE_FILE.length() > 0) {
+            // 先读取点位文件
+            logger.info("init cache map data from: {}", lOG_META_CACHE_FILE.getAbsolutePath());
+            try {
+                return (Map<String, LogMeta>) SerializationUtils.readDeserialize(lOG_META_CACHE_FILE);
+            } catch (IOException e) {
+                logger.warn("read file fail", e);
+            }
+        } else {
+            logger.warn("no cache data: {}", lOG_META_CACHE_FILE.getAbsolutePath());
         }
         return new HashMap<>();
     }

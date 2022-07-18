@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 /**
@@ -72,8 +73,13 @@ public class LogFileReader {
             }
             randomAccessFile.seek(logMeta.getReadOffset());
             while (System.currentTimeMillis() < readEndTime && (lineContent = randomAccessFile.readLine()) != null) {
-                CacheManager.addLogContent(lineContent);
+                /**
+                 * 使用 RandomAccessFile对象方法的 readLine() 都会将编码格式转换成 ISO-8859-1
+                 * 所以要把"ISO-8859-1"编码的字节数组再次转换成系统默认的编码才可以显示正常
+                 */
+                CacheManager.addLogContent(new String(lineContent.getBytes("ISO-8859-1"), StandardCharsets.UTF_8));
                 logMeta.setReadOffset(randomAccessFile.getFilePointer());
+                CacheManager.writeCacheMapFile();
             }
             // 释放句柄，否则在Windows下，文件无法操作
             releasePoinerIfFinished();

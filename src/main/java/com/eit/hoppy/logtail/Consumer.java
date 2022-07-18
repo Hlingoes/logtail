@@ -1,5 +1,7 @@
 package com.eit.hoppy.logtail;
 
+import java.util.List;
+
 /**
  * description: 接收，消费数据
  *
@@ -10,9 +12,9 @@ public interface Consumer {
     /**
      * description: 接收，消费数据
      *
-     * @param data
+     * @param datas
      * @return boolean
      * @author Hlingoes 2022/6/11
      */
-    boolean consumer(Object data);
+    boolean consumer(List<String> datas);
 }
