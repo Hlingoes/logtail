@@ -1,7 +1,7 @@
 package com.eit.hoppy.util;
 
 import com.eit.hoppy.command.ExecuteResult;
-import com.eit.hoppy.command.WinCommandExecutor;
+import com.eit.hoppy.command.WinShellExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,8 +77,8 @@ public class FileHelper {
         command.add("file");
         command.add("queryfileid");
         command.add(filePath);
-        WinCommandExecutor commandExecutor = new WinCommandExecutor(command, 1000);
-        ExecuteResult result = commandExecutor.executeCommand();
+        WinShellExecutor commandExecutor = new WinShellExecutor(command, 1000);
+        ExecuteResult result = commandExecutor.executeShell();
         if (result.getExitCode() == -1) {
             return filePath;
         }

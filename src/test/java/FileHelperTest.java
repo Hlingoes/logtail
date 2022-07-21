@@ -1,6 +1,6 @@
-import com.eit.hoppy.command.CommandExecutor;
+import com.eit.hoppy.command.ShellExecutor;
 import com.eit.hoppy.command.ExecuteResult;
-import com.eit.hoppy.command.WinCommandExecutor;
+import com.eit.hoppy.command.WinShellExecutor;
 import com.eit.hoppy.logtail.CacheManager;
 import com.eit.hoppy.logtail.LogMeta;
 import com.eit.hoppy.logtail.LogMetaFactory;
@@ -54,8 +54,8 @@ public class FileHelperTest {
         command.add("|");
         command.add("findstr");
         command.add(":80");
-        WinCommandExecutor commandExecutor = new WinCommandExecutor(command, 1000);
-        ExecuteResult result = commandExecutor.executeCommand();
+        WinShellExecutor commandExecutor = new WinShellExecutor(command, 1000);
+        ExecuteResult result = commandExecutor.executeShell();
         logger.info("testCommand: {}", result.getContent());
     }
 
@@ -68,8 +68,8 @@ public class FileHelperTest {
         command.add("file");
         command.add("queryfileid");
         command.add("E:\\hulin_workspace\\logtail\\pom.xml");
-        CommandExecutor commandExecutor = new WinCommandExecutor(command, 500);
-        ExecuteResult result = commandExecutor.executeCommand();
+        ShellExecutor shellExecutor = new WinShellExecutor(command, 500);
+        ExecuteResult result = shellExecutor.executeShell();
         logger.info("{}", result.getContent());
     }
 
@@ -79,8 +79,8 @@ public class FileHelperTest {
         command.add("ping");
         command.add("-t");
         command.add("jianshu.com");
-        CommandExecutor commandExecutor = new WinCommandExecutor(command, 1000);
-        ExecuteResult result = commandExecutor.executeCommand();
+        ShellExecutor shellExecutor = new WinShellExecutor(command, 1000);
+        ExecuteResult result = shellExecutor.executeShell();
         logger.info("{}", result.getContent());
     }
 
@@ -88,8 +88,8 @@ public class FileHelperTest {
     public void testCommandProcess3() {
         List<String> command = new ArrayList<>();
         command.add("javac");
-        CommandExecutor commandExecutor = new WinCommandExecutor(command, 500);
-        ExecuteResult result = commandExecutor.executeCommand();
+        ShellExecutor shellExecutor = new WinShellExecutor(command, 500);
+        ExecuteResult result = shellExecutor.executeShell();
         logger.info("{}", result.getContent());
     }
 

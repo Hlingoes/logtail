@@ -5,7 +5,7 @@ package com.eit.hoppy.command;
  *
  * @author Hlingoes 2022/6/12
  */
-public interface CommandExecutor {
+public interface ShellExecutor {
 
     /**
      * description: 执行命令行
@@ -13,6 +13,6 @@ public interface CommandExecutor {
      * @return com.eit.hoppy.command.ExecuteResult
      * @author Hlingoes 2022/6/12
      */
-    ExecuteResult executeCommand();
+    ExecuteResult executeShell();
 
 }

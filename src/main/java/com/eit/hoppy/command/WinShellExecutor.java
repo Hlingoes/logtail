@@ -16,8 +16,8 @@ import java.util.concurrent.TimeUnit;
  * @citation https://www.cnblogs.com/leodaxin/p/8991628.html
  * @citation https://www.jianshu.com/p/af4b3264bc5d
  */
-public class WinCommandExecutor implements CommandExecutor {
-    private static final Logger logger = LoggerFactory.getLogger(WinCommandExecutor.class);
+public class WinShellExecutor implements ShellExecutor {
+    private static final Logger logger = LoggerFactory.getLogger(WinShellExecutor.class);
 
     /**
      * 命令行
@@ -28,21 +28,20 @@ public class WinCommandExecutor implements CommandExecutor {
      */
     private int timeout;
 
-    public WinCommandExecutor(List<String> commands, int timeout) {
+    public WinShellExecutor(List<String> commands, int timeout) {
         this.commands = commands;
         this.timeout = timeout;
     }
 
     @Override
-    public ExecuteResult executeCommand() {
+    public ExecuteResult executeShell() {
         Process process = null;
-        InputStream pIn = null;
         StreamGobbler outputGobbler = null;
         try {
             ProcessBuilder processBuilder = new ProcessBuilder(commands);
             processBuilder.redirectErrorStream(true);
             process = processBuilder.start();
-            pIn = process.getInputStream();
+            InputStream pIn = process.getInputStream();
             outputGobbler = new StreamGobbler(pIn, "OUTPUT");
             outputGobbler.start();
             boolean success = process.waitFor(timeout, TimeUnit.MILLISECONDS);
