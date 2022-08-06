@@ -6,8 +6,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -134,7 +132,7 @@ public class CacheManager {
         try {
             SerializationUtils.writeSerializeObject(lOG_META_CACHE_FILE, FILE_CACHE_MAP);
         } catch (IOException e) {
-            logger.warn("write file fail", e);
+            logger.warn("write file fail: {}", lOG_META_CACHE_FILE.getAbsolutePath(), e);
         }
     }
 
@@ -143,7 +141,7 @@ public class CacheManager {
             try {
                 lOG_META_CACHE_FILE.createNewFile();
             } catch (IOException e) {
-                logger.warn("create cache file fail", e);
+                logger.warn("create cache file fail: {}", lOG_META_CACHE_FILE.getAbsolutePath(), e);
             }
             return new HashMap<>();
         }
@@ -153,7 +151,7 @@ public class CacheManager {
             try {
                 return (Map<String, LogMeta>) SerializationUtils.readDeserialize(lOG_META_CACHE_FILE);
             } catch (IOException e) {
-                logger.warn("read file fail", e);
+                logger.warn("read file fail: {}", lOG_META_CACHE_FILE.getAbsolutePath(), e);
             }
         } else {
             logger.warn("no cache data: {}", lOG_META_CACHE_FILE.getAbsolutePath());

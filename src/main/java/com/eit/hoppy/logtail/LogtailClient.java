@@ -31,7 +31,7 @@ public class LogtailClient {
     private static int consumeInterval;
     private static Consumer dataConsumer;
 
-    public static void start(Consumer consumer) {
+    public static void start(Consumer consumer) throws IOException {
         dataConsumer = consumer;
         initProperties();
         initThread();
@@ -64,9 +64,9 @@ public class LogtailClient {
         pollingThreads.add(consumeThread);
     }
 
-    private static void initFileCache() {
+    private static void initFileCache() throws IOException {
         Map<String, LogMeta> preCacheMap = CacheManager.readCacheMapFile();
-        List<File> files = FileHelper.getFileSort(dir);
+        List<File> files = FileHelper.getFileSort(dir, File::isFile);
         files.forEach(file -> {
             LogMeta preCacelogMeta = preCacheMap.get(file.getAbsolutePath());
             LogMeta newLogMeta = LogMetaFactory.createLogMeta(file);

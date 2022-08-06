@@ -1,6 +1,5 @@
-package com.eit.hoppy.logtail.thread;
+package com.eit.hoppy.logtail;
 
-import com.eit.hoppy.logtail.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

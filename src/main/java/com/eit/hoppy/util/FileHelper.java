@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -17,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * description:
@@ -85,25 +85,23 @@ public class FileHelper {
         return result.getContent();
     }
 
-    public static List<File> getFileSort(String path) {
+    public static List<File> getFileSort(String path, FileFilter filter) throws IOException {
         List<File> list = new ArrayList<>();
-        getFiles(path, list);
-        return list.stream().sorted(Comparator.comparing(File::lastModified)).collect(Collectors.toList());
-    }
-
-    public static List<File> getFiles(String realpath, List<File> files) {
-        File realFile = new File(realpath);
-        if (realFile.isDirectory()) {
-            File[] subFiles = realFile.listFiles();
-            for (File file : subFiles) {
-                if (file.isDirectory()) {
-                    getFiles(file.getAbsolutePath(), files);
-                } else {
-                    files.add(file);
-                }
+        String[] filePaths = path.split(",");
+        for (String filePath : filePaths) {
+            Path origPath = Paths.get(filePath);
+            if (origPath.toFile().isFile()) {
+                list.add(origPath.toFile());
+            } else {
+                Files.newDirectoryStream(Paths.get(filePath), entry -> {
+                    return filter.accept(entry.toFile());
+                }).forEach(path1 -> {
+                    list.add(path1.toFile());
+                });
             }
         }
-        return files;
+        list.sort(Comparator.comparing(File::lastModified));
+        return list;
     }
 
     /**

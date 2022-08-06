@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -40,13 +41,17 @@ public class DirFilePollingThread extends AbstractPollingThread {
     }
 
     private void loopFiles() {
-        List<File> files = FileHelper.getFileSort(dirPath);
-        files.forEach(file -> {
-            if (!CacheManager.isFileCached(file.getAbsolutePath())) {
-                LogMeta logMeta = LogMetaFactory.createLogMeta(file);
-                CacheManager.addFileCreateCache(logMeta);
-            }
-        });
+        try {
+            List<File> files = FileHelper.getFileSort(dirPath, File::isFile);
+            files.forEach(file -> {
+                if (!CacheManager.isFileCached(file.getAbsolutePath())) {
+                    LogMeta logMeta = LogMetaFactory.createLogMeta(file);
+                    CacheManager.addFileCreateCache(logMeta);
+                }
+            });
+        } catch (IOException e) {
+            logger.error("read file error", e);
+        }
     }
 
 }
