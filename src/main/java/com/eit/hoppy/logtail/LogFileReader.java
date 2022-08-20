@@ -1,5 +1,6 @@
 package com.eit.hoppy.logtail;
 
+import com.eit.hoppy.util.FileHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -8,6 +9,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.Queue;
+import java.util.StringJoiner;
 
 /**
  * description: 读取日志
@@ -16,35 +19,76 @@ import java.util.Objects;
  * @date 2022/6/11 21:58
  */
 public class LogFileReader {
+    public static final long EXPIRE_TIME = 5 * 1000L;
     private static Logger logger = LoggerFactory.getLogger(LogFileReader.class);
+
     /**
-     * 点位文件信息
+     * 文件路径
      */
-    private LogMeta logMeta;
+    private String sourcePath;
     /**
-     * 读取的文件
+     * 文件的dev + Inode组合
      */
-    private File file;
-    /**
-     * 用于标识该文件是否被删除
-     */
-    private boolean deleteFlag;
+    private String devInode;
     /**
      * 文件指针
      */
     private RandomAccessFile randomAccessFile;
     /**
+     * 用作文件签名的字节数，默认为1024
+     */
+    private int signBytes = 1024;
+    /**
+     * 文件的签名,使用日志文件的前1024字节的hash
+     */
+    private int signature;
+    /**
+     * 已读取的日志位置
+     */
+    private long readOffset;
+    /**
      * 单次读取的结束时间
      */
-    private long readEndTime;
+    private long lastUpdateTime;
     /**
-     * 按行读取的日志
+     * 删除标记
      */
-    String lineContent;
+    private boolean deleteFlag;
+    /**
+     * 相同sourcePath的在读队列
+     */
+    private Queue<LogFileReader> readerQueue;
 
-    public LogFileReader(LogMeta logMeta) {
-        this.logMeta = logMeta;
-        this.file = new File(logMeta.getSourcePath());
+    public LogFileReader(String sourcePath, String devInode) throws IOException {
+        this.sourcePath = sourcePath;
+        this.devInode = devInode;
+        this.randomAccessFile = new RandomAccessFile(new File(sourcePath), "r");
+        this.readOffset = randomAccessFile.length();
+        this.signBytes = this.readOffset > signBytes ? signBytes : (int) this.readOffset;
+        this.signature = FileHelper.calSignature(sourcePath, signBytes);
+    }
+
+    public LogFileReader(String sourcePath, String devInode, long readOffset) throws IOException {
+        this.sourcePath = sourcePath;
+        this.devInode = devInode;
+        this.randomAccessFile = new RandomAccessFile(new File(sourcePath), "r");
+        this.readOffset = readOffset;
+        this.signBytes = this.readOffset > signBytes ? signBytes : (int) this.readOffset;
+        this.signature = FileHelper.calSignature(sourcePath, signBytes);
+    }
+
+    public LogFileReader(String sourcePath, String devInode, int signBytes, int signature, long readOffset, long lastUpdateTime) throws IOException {
+        this.sourcePath = sourcePath;
+        this.devInode = devInode;
+        this.randomAccessFile = new RandomAccessFile(new File(sourcePath), "r");
+        this.signBytes = signBytes;
+        this.signature = signature;
+        this.readOffset = readOffset;
+        this.lastUpdateTime = lastUpdateTime;
+    }
+
+    public LogReaderCheckPoint toCheckPoint() {
+        return new LogReaderCheckPoint(sourcePath, devInode, signBytes, signature, readOffset, lastUpdateTime);
     }
 
     /**
@@ -55,75 +99,122 @@ public class LogFileReader {
      * @author Hlingoes 2022/6/26
      */
     public void readLog(long readingPeriod) {
-        if (finishReading()) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("no new content to read: {}", logMeta);
-            }
-            return;
-        }
-        long startTime = System.currentTimeMillis();
-        this.readEndTime = startTime + readingPeriod;
-        if (logger.isDebugEnabled()) {
-            logger.debug("reading: {}, during: [{}, {}]", logMeta, startTime, readEndTime);
-        }
         try {
             if (Objects.isNull(randomAccessFile)) {
-                // 重新获取句柄
-                randomAccessFile = new RandomAccessFile(file, "r");
+                String curDevInode = FileHelper.getFileInode(sourcePath);
+                if (!curDevInode.equalsIgnoreCase(devInode) && CacheManager.getSourcePath(devInode).equalsIgnoreCase(sourcePath)) {
+                    // 说明文件发生rotate，但是create事件还未被消费
+                    return;
+                }
+                if (curDevInode.equalsIgnoreCase(devInode)) {
+                    randomAccessFile = new RandomAccessFile(new File(sourcePath), "r");
+                } else {
+                    randomAccessFile = new RandomAccessFile(new File(CacheManager.getSourcePath(devInode)), "r");
+                }
             }
-            randomAccessFile.seek(logMeta.getReadOffset());
+            long startTime = System.currentTimeMillis();
+            long readEndTime = startTime + readingPeriod;
+            randomAccessFile.seek(readOffset);
+            String lineContent;
             while (System.currentTimeMillis() < readEndTime && (lineContent = randomAccessFile.readLine()) != null) {
                 /**
                  * 使用 RandomAccessFile对象方法的 readLine() 都会将编码格式转换成 ISO-8859-1
                  * 所以要把"ISO-8859-1"编码的字节数组再次转换成系统默认的编码才可以显示正常
                  */
                 CacheManager.addLogContent(new String(lineContent.getBytes("ISO-8859-1"), StandardCharsets.UTF_8));
-                logMeta.setReadOffset(randomAccessFile.getFilePointer());
-                CacheManager.writeCacheMapFile();
+                readOffset = randomAccessFile.getFilePointer();
+                lastUpdateTime = System.currentTimeMillis();
+                CacheManager.writeCheckPointFile();
             }
-            // 释放句柄，否则在Windows下，文件无法操作
-            releasePoinerIfFinished();
         } catch (IOException e) {
-            logger.error("get current log error", e);
+            logger.error("get current log error: {}", this, e);
         }
     }
 
-    private void releasePoinerIfFinished() {
-        if (finishReading()) {
-            try {
-                randomAccessFile.close();
-            } catch (IOException e) {
-                logger.error("get current log error", e);
-            } finally {
-                randomAccessFile = null;
-            }
+    public void closeAccessFile() {
+        if (Objects.isNull(randomAccessFile)) {
+            return;
+        }
+        try {
+            randomAccessFile.close();
+        } catch (IOException e) {
+            logger.error("release randomAccessFile fail: {}", this, e);
+        } finally {
+            randomAccessFile = null;
         }
     }
 
-    /**
-     * description: 文件是否读取完成
-     *
-     * @param
-     * @return boolean
-     * @author Hlingoes 2022/7/6
-     */
     public boolean finishReading() {
-        if (file.exists()) {
-            return file.length() == logMeta.getReadOffset();
+        if (Objects.isNull(randomAccessFile)) {
+            return isExpired();
         }
-        return true;
+        try {
+            return randomAccessFile.length() == readOffset;
+        } catch (IOException e) {
+            logger.error("RandonAccessFile error: {}", this, e);
+        }
+        return false;
     }
 
-    public boolean isExpired(long period) {
-        return System.currentTimeMillis() > (logMeta.getLastUpdateTime() + period);
+
+    public boolean isExpired() {
+        return System.currentTimeMillis() > (lastUpdateTime + EXPIRE_TIME);
     }
 
-    public LogMeta getLogMeta() {
-        return logMeta;
+    public String getSourcePath() {
+        return sourcePath;
     }
 
-    public void setLogMeta(LogMeta logMeta) {
-        this.logMeta = logMeta;
+    public void setSourcePath(String sourcePath) {
+        this.sourcePath = sourcePath;
+    }
+
+    public String getDevInode() {
+        return devInode;
+    }
+
+    public void setDevInode(String devInode) {
+        this.devInode = devInode;
+    }
+
+    public Queue<LogFileReader> getReaderQueue() {
+        return readerQueue;
+    }
+
+    public void setReaderQueue(Queue<LogFileReader> readerQueue) {
+        this.readerQueue = readerQueue;
+    }
+
+    public int getSignBytes() {
+        return signBytes;
+    }
+
+    public void setSignBytes(int signBytes) {
+        this.signBytes = signBytes;
+    }
+
+    public int getSignature() {
+        return signature;
+    }
+
+    public void setSignature(int signature) {
+        this.signature = signature;
+    }
+
+    public long getReadOffset() {
+        return readOffset;
+    }
+
+    public void setReadOffset(long readOffset) {
+        this.readOffset = readOffset;
+    }
+
+    public long getLastUpdateTime() {
+        return lastUpdateTime;
+    }
+
+    public void setLastUpdateTime(long lastUpdateTime) {
+        this.lastUpdateTime = lastUpdateTime;
     }
 
     public boolean getDeleteFlag() {
@@ -134,4 +225,16 @@ public class LogFileReader {
         this.deleteFlag = deleteFlag;
     }
 
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", LogFileReader.class.getSimpleName() + "[", "]")
+                .add("sourcePath='" + sourcePath + "'")
+                .add("devInode='" + devInode + "'")
+                .add("signBytes=" + signBytes)
+                .add("signature=" + signature)
+                .add("readOffset=" + readOffset)
+                .add("lastUpdateTime=" + lastUpdateTime)
+                .add("deleteFlag=" + deleteFlag)
+                .toString();
+    }
 }

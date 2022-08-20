@@ -1,9 +1,7 @@
-import com.eit.hoppy.command.ShellExecutor;
 import com.eit.hoppy.command.ExecuteResult;
+import com.eit.hoppy.command.ShellExecutor;
 import com.eit.hoppy.command.WinShellExecutor;
-import com.eit.hoppy.logtail.CacheManager;
 import com.eit.hoppy.logtail.LogMeta;
-import com.eit.hoppy.logtail.LogMetaFactory;
 import com.eit.hoppy.util.FileHelper;
 import com.eit.hoppy.util.SerializationUtils;
 import org.junit.Test;
@@ -28,13 +26,6 @@ import java.util.Map;
 public class FileHelperTest {
 
     private static final Logger logger = LoggerFactory.getLogger(FileHelperTest.class);
-
-    @Test
-    public void testReader() {
-        String str1 = FileHelper.readFirstBytes("E:\\hulin_workspace\\logtail\\pom.xml", 128);
-        logger.info(str1);
-        logger.info(String.valueOf(str1.hashCode()));
-    }
 
     @Test
     public void getFileId() {
@@ -121,14 +112,6 @@ public class FileHelperTest {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-    }
-
-    @Test
-    public void testWriteObject() throws IOException {
-        File testFile = new File("E:\\hulin_workspace\\logtail\\pom.xml");
-        LogMeta logMeta = LogMetaFactory.createLogMeta(testFile);
-        CacheManager.addFileCreateCache(logMeta);
-        CacheManager.writeCacheMapFile();
     }
 
     @Test

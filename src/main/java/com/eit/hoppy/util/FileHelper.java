@@ -14,10 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * description:
@@ -44,7 +41,7 @@ public class FileHelper {
      * @return java.lang.String
      * @author Hlingoes 2022/6/12
      */
-    public static String getDevInodeOrDefault(String filePath) {
+    private static String getDevInodeOrDefault(String filePath) {
         Path path = Paths.get(filePath);
         BasicFileAttributes bfa = null;
         try {
@@ -85,43 +82,43 @@ public class FileHelper {
         return result.getContent();
     }
 
-    public static List<File> getFileSort(String path, FileFilter filter) throws IOException {
+    public static List<File> getFileSort(String path, FileFilter filter) {
         List<File> list = new ArrayList<>();
         String[] filePaths = path.split(",");
-        for (String filePath : filePaths) {
+        Arrays.stream(filePaths).forEach(filePath -> {
             Path origPath = Paths.get(filePath);
             if (origPath.toFile().isFile()) {
                 list.add(origPath.toFile());
             } else {
-                Files.newDirectoryStream(Paths.get(filePath), entry -> {
-                    return filter.accept(entry.toFile());
-                }).forEach(path1 -> {
-                    list.add(path1.toFile());
-                });
+                try {
+                    Files.newDirectoryStream(Paths.get(filePath), entry -> filter.accept(entry.toFile())).forEach(path1 -> list.add(path1.toFile()));
+                } catch (IOException e) {
+                    logger.error("scan file error: {}", filePath, e);
+                }
             }
-        }
+        });
         list.sort(Comparator.comparing(File::lastModified));
         return list;
     }
 
     /**
-     * description: 读取文件的前bytes字节
+     * description: 文件的签名,使用日志文件的前bytes字节的hash
      *
      * @param filePath
      * @param bytes
      * @return java.lang.String
      * @author Hlingoes 2022/6/12
      */
-    public static String readFirstBytes(String filePath, int bytes) {
+    public static int calSignature(String filePath, int bytes) {
         Path fPath = Paths.get(filePath);
         char[] buff = new char[bytes];
         try (BufferedReader bfr = Files.newBufferedReader(fPath, Charset.forName("UTF-8"))) {
             bfr.read(buff, 0, bytes);
-            return String.valueOf(buff);
+            return String.valueOf(buff).hashCode();
         } catch (IOException e) {
             logger.warn("readFirstBytes fail", e);
         }
-        return "";
+        return -1;
     }
 
 }

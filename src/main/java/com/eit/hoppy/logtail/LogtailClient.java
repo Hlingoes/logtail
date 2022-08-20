@@ -1,16 +1,13 @@
 package com.eit.hoppy.logtail;
 
 import com.eit.hoppy.logtail.thread.*;
-import com.eit.hoppy.util.FileHelper;
 import com.eit.hoppy.util.IniFileReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * description: 读取配置，注册LogTail
@@ -56,7 +53,7 @@ public class LogtailClient {
     private static void initThread() {
         AbstractPollingThread dirThread = new DirFilePollingThread(dir, dirScanInterval);
         AbstractPollingThread fileThread = new FileModifyPollingThread(eventDealInterval);
-        AbstractPollingThread rotateThread = new RotateReaderPollingThread(rotateInterval);
+        AbstractPollingThread rotateThread = new EventHandlerThread(rotateInterval);
         AbstractPollingThread consumeThread = new ConsumerPollingThread(consumeInterval, dataConsumer);
         pollingThreads.add(dirThread);
         pollingThreads.add(fileThread);
@@ -65,18 +62,8 @@ public class LogtailClient {
     }
 
     private static void initFileCache() throws IOException {
-        Map<String, LogMeta> preCacheMap = CacheManager.readCacheMapFile();
-        List<File> files = FileHelper.getFileSort(dir, File::isFile);
-        files.forEach(file -> {
-            LogMeta preCacelogMeta = preCacheMap.get(file.getAbsolutePath());
-            LogMeta newLogMeta = LogMetaFactory.createLogMeta(file);
-            if (null != preCacelogMeta && preCacelogMeta.getReadOffset() <= newLogMeta.getReadOffset()) {
-                // 兼容日志部分删除的情况
-                CacheManager.addFileCreateCache(preCacelogMeta);
-            } else {
-                CacheManager.addFileCreateCache(newLogMeta);
-            }
-        });
+        CacheManager.addFileCache(dir);
+        CacheManager.recoverCheckPointFile();
     }
 
     private static void startThread() {
