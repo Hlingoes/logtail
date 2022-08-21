@@ -38,7 +38,7 @@ public class EventHandlerThread extends AbstractPollingThread {
         } else if (logEvent.getFileEventEnum() == FileEventEnum.CREATE_ROTATE) {
             doCreateRotateEvent(logEvent);
         } else {
-
+            doModifyEvent(logEvent);
         }
 
     }
@@ -85,15 +85,27 @@ public class EventHandlerThread extends AbstractPollingThread {
         }
     }
 
+    /**
+     * description: 首先根据dev+inode查找devInodeReaderMap，找到该Reader所在的ReaderQueue，获取ReaderQueue的队列首部的Reader进行日志读取操作；
+     * 若该日志文件读取完毕(readOffsetfileSize)且ReaderQueue的size > 1，则从ReaderQueue中移除该Reader
+     * （日志已经发生了轮转，且轮转后的文件已经读取完毕，所以可以从ReaderQueue中移除），此时继续把Modify Event push到Event队列中，触发队列后续文件的读取，进入下一循环；
+     * 若日志文件读取完毕且ReaderQueue的size1（size为1说明该文件并没有轮转，极有可能后续还有写入，所以不能从ReaderQueue中移除），则完成次轮Modify Event处理，进入下一循环
+     * 若日志文件没有读取完成，则把Modify Event push到Event队列中，进入下一循环（避免所有时间都被同一文件占用，保证日志文件读取公平性）
+     *
+     * @param logEvent
+     * @return void
+     * @author Hlingoes 2022/8/21
+     */
     private void doModifyEvent(LogEvent logEvent) {
         try {
             Queue<LogFileReader> readerQueue = CacheManager.getReader(logEvent.getDevInode()).getReaderQueue();
             LogFileReader curReader = readerQueue.element();
             curReader.readLog(super.getPeriod());
             if (curReader.finishReading()) {
+                // 在Windows环境下，不释放句柄，则logback日志不能rotate
                 curReader.closeAccessFile();
                 if (readerQueue.size() > 1) {
-                    // 检查日志是否在一定时间内没有被读取
+                    // 检查日志是否在一定时间内没有被读取，只有在过期后才能将reader移除
                     if (curReader.isExpired()) {
                         readerQueue.poll();
                         CacheManager.offerLogEvent(logEvent);

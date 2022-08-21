@@ -102,13 +102,14 @@ public class LogFileReader {
         try {
             if (Objects.isNull(randomAccessFile)) {
                 String curDevInode = FileHelper.getFileInode(sourcePath);
-                if (!curDevInode.equalsIgnoreCase(devInode) && CacheManager.getSourcePath(devInode).equalsIgnoreCase(sourcePath)) {
+                if (!curDevInode.equalsIgnoreCase(devInode) && CacheManager.getSourcePath(devInode).equals(sourcePath)) {
                     // 说明文件发生rotate，但是create事件还未被消费
                     return;
                 }
                 if (curDevInode.equalsIgnoreCase(devInode)) {
                     randomAccessFile = new RandomAccessFile(new File(sourcePath), "r");
                 } else {
+                    // 文件发生了轮转，需要用新的路径打开文件
                     randomAccessFile = new RandomAccessFile(new File(CacheManager.getSourcePath(devInode)), "r");
                 }
             }
@@ -156,7 +157,13 @@ public class LogFileReader {
         return false;
     }
 
-
+    /**
+     * description: 判断日志读取时间是否过期
+     *
+     * @param
+     * @return boolean
+     * @author Hlingoes 2022/8/21
+     */
     public boolean isExpired() {
         return System.currentTimeMillis() > (lastUpdateTime + EXPIRE_TIME);
     }

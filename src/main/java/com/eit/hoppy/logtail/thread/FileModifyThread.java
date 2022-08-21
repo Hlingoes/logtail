@@ -17,15 +17,15 @@ import java.util.List;
  * @author Hlingoes
  * @date 2022/6/11 23:07
  */
-public class FileModifyPollingThread extends AbstractPollingThread {
-    private static Logger logger = LoggerFactory.getLogger(FileModifyPollingThread.class);
+public class FileModifyThread extends AbstractPollingThread {
+    private static Logger logger = LoggerFactory.getLogger(FileModifyThread.class);
 
-    public FileModifyPollingThread() {
-        super(FileModifyPollingThread.class.getSimpleName(), 1000L);
+    public FileModifyThread() {
+        super(FileModifyThread.class.getSimpleName(), 1000L);
     }
 
-    public FileModifyPollingThread(long period) {
-        super(FileModifyPollingThread.class.getSimpleName(), period);
+    public FileModifyThread(long period) {
+        super(FileModifyThread.class.getSimpleName(), period);
     }
 
     @Override

@@ -51,10 +51,10 @@ public class LogtailClient {
     }
 
     private static void initThread() {
-        AbstractPollingThread dirThread = new DirFilePollingThread(dir, dirScanInterval);
-        AbstractPollingThread fileThread = new FileModifyPollingThread(eventDealInterval);
+        AbstractPollingThread dirThread = new DirScanThread(dir, dirScanInterval);
+        AbstractPollingThread fileThread = new FileModifyThread(eventDealInterval);
         AbstractPollingThread rotateThread = new EventHandlerThread(rotateInterval);
-        AbstractPollingThread consumeThread = new ConsumerPollingThread(consumeInterval, dataConsumer);
+        AbstractPollingThread consumeThread = new LogConsumerThread(consumeInterval, dataConsumer);
         pollingThreads.add(dirThread);
         pollingThreads.add(fileThread);
         pollingThreads.add(rotateThread);

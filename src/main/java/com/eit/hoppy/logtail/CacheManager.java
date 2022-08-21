@@ -41,7 +41,7 @@ public class CacheManager {
      */
     private static final Map<String, Queue<LogFileReader>> NAMED_LOG_FILE_READER_QUEUE_MAP = new HashMap<>();
     /**
-     * 以devInode为key/LogFileReader为value的map，用于存储当前正在读取的所有ReaderQueue
+     * 以devInode为key/LogFileReader为value的map，用于存储当前正在读取的Reader
      * key: devInode
      * value: LogFileReader
      */
@@ -77,6 +77,13 @@ public class CacheManager {
         });
     }
 
+    /**
+     * description: 将缓存的日志文件信息按照修改时间的升序排列
+     *
+     * @param
+     * @return java.util.List<com.eit.hoppy.logtail.LogMeta>
+     * @author Hlingoes 2022/8/21
+     */
     public static List<LogMeta> getSortedCacheLogMeta() {
         if (FILE_CACHE_MAP.isEmpty()) {
             return new ArrayList<>();
@@ -111,7 +118,7 @@ public class CacheManager {
     }
 
     /**
-     * description: 添加事件
+     * description: 添加事件，会对事件去重，减少无效的事件处理行为
      *
      * @param logEvent
      * @return void
@@ -123,40 +130,88 @@ public class CacheManager {
         }
     }
 
+    /**
+     * description: 从队列头取出事件
+     *
+     * @param
+     * @return com.eit.hoppy.logtail.LogEvent
+     * @author Hlingoes 2022/8/21
+     */
     public static LogEvent pollLogEvent() {
         return LOG_EVENT_QUEUE.poll();
     }
 
+    /**
+     * description: 获取devInode对应的reader
+     *
+     * @param devInode
+     * @return com.eit.hoppy.logtail.LogFileReader
+     * @author Hlingoes 2022/8/21
+     */
     public static LogFileReader getReader(String devInode) {
         return DEVINODE_READER_MAP.get(devInode);
     }
 
+    /**
+     * description: 获取最新的devInode对应的文件路径，文件发生rotate后，devInode不会变化，文件路径会被更新
+     * eg: test.log ==> test_01.log，devInode不变，但文件名变化
+     *
+     * @param devInode
+     * @return java.lang.String
+     * @author Hlingoes 2022/8/21
+     */
     public static String getSourcePath(String devInode) {
         return DEVINODE_READER_MAP.get(devInode).getSourcePath();
     }
 
+    /**
+     * description: 删除缓存信息
+     *
+     * @param sourcePath
+     * @param devInode
+     * @return void
+     * @author Hlingoes 2022/8/21
+     */
     public static void removeFileCache(String sourcePath, String devInode) {
         DEVINODE_READER_MAP.remove(devInode);
         FILE_CACHE_MAP.remove(sourcePath);
     }
 
-
     public static void addLogContent(String content) {
         LOG_CONTENT_QUEUE.offer(content);
     }
 
+    /**
+     * description: 批量获取日志
+     *
+     * @param batch
+     * @return java.util.List<java.lang.String>
+     * @author Hlingoes 2022/8/21
+     */
     public static List<String> batchReadContents(int batch) {
         List<String> batchContents = new ArrayList<>(batch);
         LOG_CONTENT_QUEUE.drainTo(batchContents, batch);
         return batchContents;
     }
 
+    /**
+     * description: 获取队列中剩余的全部日志
+     *
+     * @param
+     * @return java.util.List<java.lang.String>
+     * @author Hlingoes 2022/8/21
+     */
     public static List<String> remainContents() {
-        List<String> batchContents = new ArrayList<>(LOG_CONTENT_QUEUE.size());
-        LOG_CONTENT_QUEUE.drainTo(batchContents, LOG_CONTENT_QUEUE.size());
-        return batchContents;
+        return batchReadContents(LOG_CONTENT_QUEUE.size());
     }
 
+    /**
+     * description: 将按顺序排列的reader状态，序列化后写入文件
+     *
+     * @param
+     * @return void
+     * @author Hlingoes 2022/8/21
+     */
     public static void writeCheckPointFile() throws IOException {
         Map<String, List<LogReaderCheckPoint>> checkPointMap = new HashMap<>(NAMED_LOG_FILE_READER_QUEUE_MAP.size());
         NAMED_LOG_FILE_READER_QUEUE_MAP.forEach((sourcePath, logFileReaders) -> {
@@ -167,6 +222,13 @@ public class CacheManager {
         SerializationUtils.writeSerializeObject(lOG_META_CACHE_FILE, checkPointMap);
     }
 
+    /**
+     * description: 反序列化文件，恢复日志的读取状态
+     *
+     * @param
+     * @return void
+     * @author Hlingoes 2022/8/21
+     */
     public static void recoverCheckPointFile() throws IOException {
         if (!lOG_META_CACHE_FILE.exists()) {
             lOG_META_CACHE_FILE.createNewFile();
